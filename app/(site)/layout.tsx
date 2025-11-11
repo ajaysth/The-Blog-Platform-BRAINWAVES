@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { TopHeader } from "@/components/top-header";
 
 import { Toaster } from "@/components/ui/toaster";
+import { TopLoader as NextTopLoader } from "next-top-loader";
 import Footer from "@/components/footer";
 
 const playfairDisplay = Playfair_Display({
@@ -41,6 +42,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <NextTopLoader color="hsl(var(--primary))" />
           <Toaster />
           <header className="relative z-30">
             {/* <TopHeader /> */}

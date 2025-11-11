@@ -11,28 +11,31 @@ import {
 import {
   Menu,
   X,
+  Code,
   Moon,
   Sun,
   Home,
+  Palette,
+  Zap,
+  BookOpen,
   Grid3x3,
   FileText,
   PenSquare,
   ArrowRight,
   Sparkles,
   User,
+  ChevronDown,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
-let categoryLeaveTimeout: NodeJS.Timeout;
-
 const Navbar: FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -44,16 +47,19 @@ const Navbar: FC = () => {
   }, []);
 
   const handleCategoryMouseEnter = () => {
-    clearTimeout(categoryLeaveTimeout);
-    setCategoriesOpen(true);
+    setActiveDropdown("posts");
   };
 
   const handleCategoryMouseLeave = () => {
-    categoryLeaveTimeout = setTimeout(() => {
-      setCategoriesOpen(false);
-    }, 300); // Increased timeout
+    setActiveDropdown(null);
   };
 
+  const postsCategories = [
+    { name: "Technology", icon: Code, href: "/posts/technology" },
+    { name: "Design", icon: Palette, href: "/posts/design" },
+    { name: "Development", icon: Zap, href: "/posts/development" },
+    { name: "Tutorials", icon: BookOpen, href: "/posts/tutorials" },
+  ];
   const categories = [
     {
       name: "Technology",
@@ -130,6 +136,7 @@ const Navbar: FC = () => {
               Home
             </NavLink>
             <div
+              className="relative"
               onMouseEnter={handleCategoryMouseEnter}
               onMouseLeave={handleCategoryMouseLeave}
             >
@@ -137,49 +144,63 @@ const Navbar: FC = () => {
                 Categories
               </NavLink>
               <AnimatePresence>
-                {categoriesOpen && (
+                {activeDropdown === "posts" && (
                   <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 15 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-[720px] bg-background/80 backdrop-blur-xl border border-border/30 rounded-2xl shadow-2xl shadow-black/10 overflow-hidden"
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute top-full left-0 mt-2 w-64 bg-background/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-2xl shadow-black/10 overflow-hidden"
                   >
-                    <div className="p-6">
-                      <div className="grid grid-cols-3 gap-4 mb-6">
-                        {categories.map((category) => (
-                          <CategoryCard
-                            key={category.name}
-                            category={category}
-                          />
-                        ))}
+                    {/* Gradient border effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 rounded-xl opacity-50" />
+
+                    <div className="relative p-3">
+                      {/* Header */}
+                      <div className="flex items-center gap-2 mb-3 px-2">
+                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Blog Categories
+                        </span>
                       </div>
-                      <motion.a
-                        href="/categories"
-                        className="group relative"
-                        whileHover="hover"
+
+                      {postsCategories.map((category, index) => (
+                        <motion.div
+                          key={category.name}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                        >
+                          <Link
+                            href={category.href}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 transition-all duration-200 group"
+                          >
+                            <category.icon className="w-4 h-4 text-primary group-hover:scale-110 group-hover:rotate-12 transition-all duration-200" />
+                            <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                              {category.name}
+                            </span>
+                            <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ChevronDown className="w-3 h-3 rotate-[-90deg] text-primary" />
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ))}
+
+                      <div className="border-t border-border/30 my-3" />
+
+                      <Link
+                        href="/category"
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 transition-all duration-200 text-primary font-medium text-sm border border-primary/20 hover:border-primary/30"
                       >
-                        <div className="flex items-center justify-center space-x-2 w-full py-3 px-4 rounded-xl bg-secondary hover:bg-accent/50 transition-colors duration-300 border border-border/50">
-                          <motion.span className="text-sm font-semibold text-secondary-foreground group-hover:text-accent-foreground transition-colors duration-300 relative z-10">
-                            Browse All Categories
-                            <motion.div
-                              className="absolute bottom-0 left-0 h-[2px] bg-primary"
-                              initial={{ scaleX: 0, originX: 0 }}
-                              variants={{ hover: { scaleX: 1 } }}
-                              transition={{ duration: 0.3, ease: "easeOut" }}
-                            />
-                          </motion.span>
-                          <motion.div variants={{ hover: { x: 5 } }}>
-                            <ArrowRight className="h-4 w-4 text-secondary-foreground/70 group-hover:text-accent-foreground transition-colors duration-300" />
-                          </motion.div>
-                        </div>
-                      </motion.a>
+                        <span>Browse All Categories</span>
+                        <ChevronDown className="w-3 h-3 rotate-[-90deg]" />
+                      </Link>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-            <NavLink href="/posts" icon={<FileText />}>
+            <NavLink href="/post" icon={<FileText />}>
               Posts
             </NavLink>
           </div>

@@ -21,6 +21,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FooterLink {
   name: string;
@@ -162,23 +168,31 @@ export default function Footer() {
 
               {/* Social Links */}
               <div className="flex flex-wrap gap-2">
-                {socialLinks.map((social, index) => (
-                  <motion.a
-                    key={social.label}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`p-2 rounded-lg bg-muted/50 hover:bg-accent/10 text-muted-foreground ${social.color} transition-all duration-300 hover:scale-110`}
-                    aria-label={social.label}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    whileHover={{ y: -2 }}
-                  >
-                    <social.icon className="w-5 h-5" />
-                  </motion.a>
-                ))}
+                <TooltipProvider>
+                  {socialLinks.map((social, index) => (
+                    <Tooltip key={social.label}>
+                      <TooltipTrigger asChild>
+                        <motion.a
+                          href={social.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`p-2 rounded-lg bg-muted/50 hover:bg-accent/10 text-muted-foreground ${social.color} transition-all duration-300 hover:scale-110`}
+                          aria-label={social.label}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          whileInView={{ opacity: 1, scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          whileHover={{ y: -2 }}
+                        >
+                          <social.icon className="w-5 h-5" />
+                        </motion.a>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{social.label}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </TooltipProvider>
               </div>
             </motion.div>
 
