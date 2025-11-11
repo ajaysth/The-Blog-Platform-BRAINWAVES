@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import React, { useState, FormEvent } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -34,7 +34,7 @@ interface Category {
 }
 
 interface SocialLink {
-  icon: (props: React.SVGProps<SVGSVGElement>) => JSX.Element;
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
   href: string;
   label: string;
   color: string;
