@@ -9,84 +9,253 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Category {
-  id          String  @id
-  name        String
-  slug        String  @unique
-  description String?
-  icon        String?
-  Post        Post[]
+// This is your Prisma schema file for a professional blog platform
+// Compatible with Supabase PostgreSQL and Auth.js
+
+// ============================================
+// AUTH.JS REQUIRED MODELS
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
-model Image {
-  id         String  @id
-  url        String
-  postId     String
-  isFeatured Boolean @default(false)
-  Post       Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
-model Post {
-  id            String     @id
-  slug          String     @unique
-  title         String
-  excerpt       String?
-  content       String
-  date          DateTime
-  readTime      String?
-  trending      Boolean    @default(false)
-  status        PostStatus @default(DRAFT)
-  views         Int        @default(0)
-  likes         Int        @default(0)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime
-  authorId      String
-  categoryId    String
-  featuredImage String?    @default("/cardimg/1.jpg")
-  Image         Image[]
-  User          User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  Category      Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  Tag           Tag[]
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
-model Profile {
-  id       String  @id
-  bio      String?
-  website  String?
-  twitter  String?
-  linkedin String?
-  userId   String  @unique
-  User     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+// ============================================
+// USER & ROLE MANAGEMENT
+// ============================================
 
-model Tag {
-  id   String @id
-  name String @unique
-  slug String @unique
-  Post Post[]
+enum Role {
+  USER
+  AUTHOR
+  ADMIN
 }
 
 model User {
-  id          String   @id
-  clerkUserId String   @unique
-  name        String?
-  email       String
-  imageUrl    String?
-  createdAt   DateTime @default(now())
-  Post        Post[]
-  Profile     Profile?
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  role          Role      @default(USER)
+  bio           String?   @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Auth.js relations
+  accounts Account[]
+  sessions Session[]
+
+  // Blog relations
+  posts        Post[]
+  comments     Comment[]
+  likes        Like[]
+  wishlists    Wishlist[]
+  followers    Follow[]      @relation("Following")
+  following    Follow[]      @relation("Follower")
+  
+  @@map("users")
 }
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// ============================================
+// BLOG CONTENT MODELS
+// ============================================
 
 enum PostStatus {
   DRAFT
   PUBLISHED
+  ARCHIVED
 }
 
-model Note {
-  id          String   @id
-  name        String?
-  email       String
-  imageUrl    String?
-  createdAt   DateTime @default(now())
+model Post {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  excerpt     String?    @db.Text
+  content     String     @db.Text
+  coverImage  String?    @map("cover_image")
+  status      PostStatus @default(DRAFT)
+  featured    Boolean    @default(false)
+  viewCount   Int        @default(0) @map("view_count")
+  readTime    Int?       @map("read_time") // in minutes
+  publishedAt DateTime?  @map("published_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  authorId   String    @map("author_id")
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  categoryId String?   @map("category_id")
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  images    PostImage[]
+  tags      PostTag[]
+  comments  Comment[]
+  likes     Like[]
+  wishlists Wishlist[]
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@map("posts")
+}
+
+model PostImage {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String?
+  caption   String?  @db.Text
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  postId String @map("post_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("post_images")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  color       String?  // For UI theming
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  posts Post[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
   
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+model PostTag {
+  id        String   @id @default(cuid())
+  postId    String   @map("post_id")
+  tagId     String   @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@index([postId])
+  @@index([tagId])
+  @@map("post_tags")
+}
+
+// ============================================
+// ENGAGEMENT MODELS
+// ============================================
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  postId   String  @map("post_id")
+  post     Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId String  @map("author_id")
+  author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId String? @map("parent_id")
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  postId String @map("post_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("likes")
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  postId String @map("post_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("wishlists")
 }
