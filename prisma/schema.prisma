@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Category {
+  id          String  @id
+  name        String
+  slug        String  @unique
+  description String?
+  icon        String?
+  Post        Post[]
+}
+
+model Image {
+  id         String  @id
+  url        String
+  postId     String
+  isFeatured Boolean @default(false)
+  Post       Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id            String     @id
+  slug          String     @unique
+  title         String
+  excerpt       String?
+  content       String
+  date          DateTime
+  readTime      String?
+  trending      Boolean    @default(false)
+  status        PostStatus @default(DRAFT)
+  views         Int        @default(0)
+  likes         Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime
+  authorId      String
+  categoryId    String
+  featuredImage String?    @default("/cardimg/1.jpg")
+  Image         Image[]
+  User          User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  Category      Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  Tag           Tag[]
+}
+
+model Profile {
+  id       String  @id
+  bio      String?
+  website  String?
+  twitter  String?
+  linkedin String?
+  userId   String  @unique
+  User     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Tag {
+  id   String @id
+  name String @unique
+  slug String @unique
+  Post Post[]
+}
+
+model User {
+  id          String   @id
+  clerkUserId String   @unique
+  name        String?
+  email       String
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  Post        Post[]
+  Profile     Profile?
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Note {
+  id          String   @id
+  name        String?
+  email       String
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  
+}
