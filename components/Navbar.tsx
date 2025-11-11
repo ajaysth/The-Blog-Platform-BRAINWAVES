@@ -1,13 +1,9 @@
 "use client";
 
-import { useState, useEffect, FC, useRef } from "react";
-import Link from "next/link";
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useTransform,
-} from "framer-motion";
+import { useState, useEffect, FC, useRef } from "react";                                                                                                                                                         
+import Link from "next/link";                                                      
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+
 import {
   Menu,
   X,
@@ -60,61 +56,13 @@ const Navbar: FC = () => {
     { name: "Development", icon: Zap, href: "/posts/development" },
     { name: "Tutorials", icon: BookOpen, href: "/posts/tutorials" },
   ];
-  const categories = [
-    {
-      name: "Technology",
-      image:
-        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&h=350&fit=crop",
-      count: "124 posts",
-      icon: "⚡",
-    },
-    {
-      name: "Design",
-      image:
-        "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=500&h=350&fit=crop",
-      count: "89 posts",
-      icon: "🎨",
-    },
-    {
-      name: "Development",
-      image:
-        "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=500&h=350&fit=crop",
-      count: "156 posts",
-      icon: "💻",
-    },
-    {
-      name: "Business",
-      image:
-        "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&h=350&fit=crop",
-      count: "67 posts",
-      icon: "📊",
-    },
-    {
-      name: "Lifestyle",
-      image:
-        "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=500&h=350&fit=crop",
-      count: "92 posts",
-      icon: "✨",
-    },
-    {
-      name: "Science",
-      image:
-        "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&h=350&fit=crop",
-      count: "78 posts",
-      icon: "🔬",
-    },
-  ];
 
   return (
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className={`sticky top-0 left-0 w-full z-50 transition-colors duration-300 ${
-        scrolled
-          ? "bg-background/80 backdrop-blur-lg border-b border-border/30"
-          : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 w-full z-50 transition-colors duration-300 bg-background/80 backdrop-blur-lg border-b border-border/30`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -220,7 +168,7 @@ const Navbar: FC = () => {
                   exit={{ y: 20, opacity: 0, rotate: 90 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {theme === "light" ? <Sun /> : <Moon />}
+                  {mounted && (theme === "light" ? <Sun /> : <Moon />)}
                 </motion.div>
               </AnimatePresence>
             </motion.button>

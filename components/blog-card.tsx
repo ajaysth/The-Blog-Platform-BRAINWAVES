@@ -11,11 +11,12 @@ import { StaticImageData } from "next/image";
 interface BlogCardProps {
   id: string;
   title: string;
+  slug: string;
   excerpt: string;
   image: string | StaticImageData;
   category: string;
   author: {
-    name:string;
+    name: string;
     avatar: string;
   };
   date: string;
@@ -27,6 +28,7 @@ const BlogCard = ({
   id,
   title,
   excerpt,
+  slug,
   image,
   category,
   author,
@@ -40,7 +42,7 @@ const BlogCard = ({
         featured ? "lg:col-span-2" : ""
       }`}
     >
-      <Link href={`/blog/${id}`} className="block">
+      <Link href={`/post/${slug}`} className="block">
         <div className="relative overflow-hidden aspect-video">
           <Image
             src={image}
