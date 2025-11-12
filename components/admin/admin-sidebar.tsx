@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  ChevronRight,
   Layout,
   FileText,
   Folder,
@@ -14,6 +13,7 @@ import {
   Settings,
   Menu,
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const menuItems = [
   { name: "Dashboard", href: "/admin", icon: Layout },
@@ -24,7 +24,15 @@ const menuItems = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+}
+
+export function AdminSidebar({ user }: AdminSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -60,7 +68,7 @@ export function AdminSidebar() {
                 B
               </div>
               <span className="font-playfair-display font-bold text-sidebar-foreground truncate">
-                Blog
+                BrainWaves
               </span>
             </div>
           )}
@@ -100,23 +108,26 @@ export function AdminSidebar() {
           })}
         </nav>
 
-        {/* Footer */}
+        {/* Footer - User Profile */}
         <div
           className={`border-t border-sidebar-border p-4 ${
             !isOpen && "text-center"
           }`}
         >
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold text-xs flex-shrink-0">
-              A
-            </div>
+            <Avatar className="w-8 h-8 flex-shrink-0">
+              <AvatarImage src={user?.image || ""} alt={user?.name || ""} />
+              <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
+                {user?.name?.charAt(0).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
             {isOpen && (
-              <div className="truncate">
-                <p className="text-xs font-medium text-sidebar-foreground">
-                  Admin User
+              <div className="truncate flex-1 min-w-0">
+                <p className="text-xs font-medium text-sidebar-foreground truncate">
+                  {user?.name || "User"}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  admin@blog.local
+                <p className="text-xs text-muted-foreground truncate">
+                  {user?.email || "user@example.com"}
                 </p>
               </div>
             )}

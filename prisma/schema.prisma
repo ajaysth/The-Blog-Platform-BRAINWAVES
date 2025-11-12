@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
+  // output   = "../app/generated/prisma"
 }
 
 datasource db {
@@ -9,28 +9,20 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// This is your Prisma schema file for a professional blog platform
-// Compatible with Supabase PostgreSQL and Auth.js
-
-// ============================================
-// AUTH.JS REQUIRED MODELS
-// ============================================
-
 model Account {
   id                String  @id @default(cuid())
   userId            String  @map("user_id")
   type              String
   provider          String
   providerAccountId String  @map("provider_account_id")
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -55,39 +47,25 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// ============================================
-// USER & ROLE MANAGEMENT
-// ============================================
-
-enum Role {
-  USER
-  AUTHOR
-  ADMIN
-}
-
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String?   @unique
-  emailVerified DateTime? @map("email_verified")
+  email         String?    @unique
+  emailVerified DateTime?  @map("email_verified")
   image         String?
-  role          Role      @default(USER)
-  bio           String?   @db.Text
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  role          Role       @default(USER)
+  bio           String?
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  accounts      Account[]
+  comments      Comment[]
+  following     Follow[]   @relation("Follower")
+  followers     Follow[]   @relation("Following")
+  likes         Like[]
+  posts         Post[]
+  sessions      Session[]
+  wishlists     Wishlist[]
 
-  // Auth.js relations
-  accounts Account[]
-  sessions Session[]
-
-  // Blog relations
-  posts        Post[]
-  comments     Comment[]
-  likes        Like[]
-  wishlists    Wishlist[]
-  followers    Follow[]      @relation("Following")
-  following    Follow[]      @relation("Follower")
-  
   @@map("users")
 }
 
@@ -96,9 +74,8 @@ model Follow {
   followerId  String   @map("follower_id")
   followingId String   @map("following_id")
   createdAt   DateTime @default(now()) @map("created_at")
-
-  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
-  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
   @@index([followerId])
@@ -106,42 +83,29 @@ model Follow {
   @@map("follows")
 }
 
-// ============================================
-// BLOG CONTENT MODELS
-// ============================================
-
-enum PostStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
-}
-
 model Post {
-  id          String     @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
-  slug        String     @unique
-  excerpt     String?    @db.Text
-  content     String     @db.Text
-  coverImage  String?    @map("cover_image")
-  status      PostStatus @default(DRAFT)
-  featured    Boolean    @default(false)
-  viewCount   Int        @default(0) @map("view_count")
-  readTime    Int?       @map("read_time") // in minutes
-  publishedAt DateTime?  @map("published_at")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-
-  // Relations
-  authorId   String    @map("author_id")
-  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  categoryId String?   @map("category_id")
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
-  images    PostImage[]
-  tags      PostTag[]
-  comments  Comment[]
-  likes     Like[]
-  wishlists Wishlist[]
+  slug        String      @unique
+  excerpt     String?
+  content     String
+  coverImage  String?     @map("cover_image")
+  status      PostStatus  @default(DRAFT)
+  featured    Boolean     @default(false)
+  viewCount   Int         @default(0) @map("view_count")
+  readTime    Int?        @map("read_time")
+  publishedAt DateTime?   @map("published_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  authorId    String      @map("author_id")
+  categoryId  String?     @map("category_id")
+  comments    Comment[]
+  likes       Like[]
+  images      PostImage[]
+  tags        PostTag[]
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category    Category?   @relation(fields: [categoryId], references: [id])
+  wishlists   Wishlist[]
 
   @@index([authorId])
   @@index([categoryId])
@@ -155,12 +119,11 @@ model PostImage {
   id        String   @id @default(cuid())
   url       String
   alt       String?
-  caption   String?  @db.Text
+  caption   String?
   order     Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")
-
-  postId String @map("post_id")
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String   @map("post_id")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
   @@map("post_images")
@@ -170,12 +133,11 @@ model Category {
   id          String   @id @default(cuid())
   name        String   @unique
   slug        String   @unique
-  description String?  @db.Text
-  color       String?  // For UI theming
+  description String?
+  color       String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-
-  posts Post[]
+  posts       Post[]
 
   @@map("categories")
 }
@@ -185,8 +147,7 @@ model Tag {
   name      String    @unique
   slug      String    @unique
   createdAt DateTime  @default(now()) @map("created_at")
-  
-  posts PostTag[]
+  posts     PostTag[]
 
   @@map("tags")
 }
@@ -196,9 +157,8 @@ model PostTag {
   postId    String   @map("post_id")
   tagId     String   @map("tag_id")
   createdAt DateTime @default(now()) @map("created_at")
-
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([postId, tagId])
   @@index([postId])
@@ -206,23 +166,18 @@ model PostTag {
   @@map("post_tags")
 }
 
-// ============================================
-// ENGAGEMENT MODELS
-// ============================================
-
 model Comment {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  postId   String  @map("post_id")
-  post     Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  authorId String  @map("author_id")
-  author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parentId String? @map("parent_id")
-  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies  Comment[] @relation("CommentReplies")
+  id        String    @id @default(cuid())
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  postId    String    @map("post_id")
+  authorId  String    @map("author_id")
+  parentId  String?   @map("parent_id")
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
   @@index([authorId])
@@ -233,11 +188,10 @@ model Comment {
 model Like {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-
-  postId String @map("post_id")
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
   @@index([postId])
@@ -248,14 +202,25 @@ model Like {
 model Wishlist {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
-
-  postId String @map("post_id")
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
   @@map("wishlists")
+}
+
+enum Role {
+  USER
+  AUTHOR
+  ADMIN
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }

@@ -5,12 +5,17 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Session } from "next-auth";
+
+interface AdminLayoutClientProps {
+  children: React.ReactNode;
+  session: Session;
+}
 
 export function AdminLayoutClient({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+  session,
+}: AdminLayoutClientProps) {
   return (
     <ThemeProvider
       attribute="class"
@@ -19,9 +24,9 @@ export function AdminLayoutClient({
       disableTransitionOnChange
     >
       <div className="flex h-screen bg-background">
-        <AdminSidebar />
+        <AdminSidebar user={session.user} />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeader />
+          <AdminHeader user={session.user} />
           <main className="flex-1 overflow-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

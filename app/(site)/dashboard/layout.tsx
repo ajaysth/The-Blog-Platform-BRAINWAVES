@@ -1,13 +1,12 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { AdminLayoutClient } from "@/components/admin/admin-layout-client";
 
 export const metadata = {
-  title: "Admin Panel - BrainWaves",
-  description: "Admin dashboard for BrainWaves",
+  title: "Dashboard - BrainWaves",
+  description: "Your personal dashboard",
 };
 
-export default async function AdminLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -19,5 +18,5 @@ export default async function AdminLayout({
     redirect("/auth/signin");
   }
 
-  return <AdminLayoutClient session={session}>{children}</AdminLayoutClient>;
+  return <div className="min-h-screen bg-background">{children}</div>;
 }

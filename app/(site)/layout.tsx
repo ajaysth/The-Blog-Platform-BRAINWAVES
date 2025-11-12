@@ -1,57 +1,18 @@
-import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
-import "../globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import Navbar from "@/components/Navbar";
-import { TopHeader } from "@/components/top-header";
-
-import { Toaster } from "@/components/ui/toaster";
-import { TopLoader as NextTopLoader } from "next-top-loader";
 import Footer from "@/components/footer";
+import Navbar from "@/components/Navbar";
 
-const playfairDisplay = Playfair_Display({
-  variable: "--font-playfair-display",
-  subsets: ["latin"], // you can add more subsets if needed
-  weight: ["400", "700"], // optional, define the weights you need
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"], // add more if needed
-  weight: ["400", "500", "600", "700"], // optional: define the weights you need
-});
-
-export const metadata: Metadata = {
-  title: "BrainWaves",
-  description: "Wave your Brain",
-};
-
-export default function RootLayout({
+export default function SiteLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${playfairDisplay.variable} ${inter.variable} antialiased`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <NextTopLoader color="var(--loader-color)" />
-          <Toaster />
-          <header className="relative z-30">
-            {/* <TopHeader /> */}
-            <Navbar />
-          </header>
-          {children}
-          <Footer />
-        </ThemeProvider>
-      </body>
-    </html>
+    <>
+      <header className="relative z-30">
+        <Navbar />
+      </header>
+      {children}
+      <Footer />
+    </>
   );
 }
