@@ -10,6 +10,8 @@ import BlogCard from "@/components/blog-card";
 import Stats from "@/components/stats";
 import Newsletter from "@/components/newsletter";
 import CTA1 from "@/components/mvpblocks/cta-1";
+import FAQ from "@/components/FAQ";
+import Banner from "@/components/banner";
 
 interface BlogCardProps {
   id: string;
@@ -103,7 +105,8 @@ export default function Home() {
       </section>
       <Stats />
       <Newsletter />
-      <CTA1 />
+      <Banner />
+      <FAQ />
     </main>
   );
 }
