@@ -3,43 +3,64 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Post, Category, User } from "@prisma/client";
 
-const mockPosts = [
-  {
-    id: 1,
-    title: "Getting Started with Next.js 15",
-    category: "Development",
-    status: "Published",
-    views: 1234,
-    date: "Nov 10, 2024",
-  },
-  {
-    id: 2,
-    title: "Advanced React Patterns",
-    category: "React",
-    status: "Published",
-    views: 892,
-    date: "Nov 8, 2024",
-  },
-  {
-    id: 3,
-    title: "Tailwind CSS Best Practices",
-    category: "CSS",
-    status: "Draft",
-    views: 0,
-    date: "Nov 5, 2024",
-  },
-  {
-    id: 4,
-    title: "TypeScript Tips & Tricks",
-    category: "Development",
-    status: "Published",
-    views: 2156,
-    date: "Nov 1, 2024",
-  },
-];
+type PostWithRelations = Post & {
+  category: Category | null;
+  author: User;
+};
 
 export function PostsManager() {
+  const [posts, setPosts] = useState<PostWithRelations[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await fetch("/api/posts");
+        if (!response.ok) {
+          throw new Error("Failed to fetch posts");
+        }
+        const data = await response.json();
+        setPosts(data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  const handleDelete = async (postId: string) => {
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      try {
+        const response = await fetch(`/api/posts/${postId}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete post");
+        }
+
+        setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+      } catch (error) {
+        setError(error.message);
+      }
+    }
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -78,19 +99,19 @@ export function PostsManager() {
               </tr>
             </thead>
             <tbody>
-              {mockPosts.map((post) => (
+              {posts.map((post) => (
                 <tr
                   key={post.id}
                   className="border-b border-border hover:bg-muted/50 transition-colors"
                 >
                   <td className="py-4 px-4 font-medium">{post.title}</td>
                   <td className="py-4 px-4 text-sm text-muted-foreground">
-                    {post.category}
+                    {post.category?.name || "Uncategorized"}
                   </td>
                   <td className="py-4 px-4">
                     <span
                       className={`text-xs px-2 py-1 rounded-full ${
-                        post.status === "Published"
+                        post.status === "PUBLISHED"
                           ? "bg-primary/20 text-primary"
                           : "bg-muted text-muted-foreground"
                       }`}
@@ -99,10 +120,10 @@ export function PostsManager() {
                     </span>
                   </td>
                   <td className="py-4 px-4 text-sm">
-                    {post.views.toLocaleString()}
+                    {post.viewCount.toLocaleString()}
                   </td>
                   <td className="py-4 px-4 text-sm text-muted-foreground">
-                    {post.date}
+                    {new Date(post.createdAt).toLocaleDateString()}
                   </td>
                   <td className="py-4 px-4 flex justify-end gap-2">
                     <button className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground">
@@ -111,7 +132,10 @@ export function PostsManager() {
                     <button className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground">
                       <Edit size={16} />
                     </button>
-                    <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-muted-foreground hover:text-destructive">
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-muted-foreground hover:text-destructive"
+                    >
                       <Trash2 size={16} />
                     </button>
                   </td>
@@ -124,3 +148,4 @@ export function PostsManager() {
     </div>
   );
 }
+

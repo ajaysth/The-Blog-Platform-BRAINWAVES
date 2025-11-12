@@ -135,6 +135,7 @@ model Category {
   slug        String   @unique
   description String?
   color       String?
+  catimage    String?  @default("hero-blog.jpg")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   posts       Post[]

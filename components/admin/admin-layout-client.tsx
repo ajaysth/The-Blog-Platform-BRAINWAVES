@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminHeader } from "@/components/admin/admin-header";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Session } from "next-auth";
 
@@ -36,7 +36,7 @@ export function AdminLayoutClient({
               {children}
             </motion.div>
           </main>
-          <Toaster />
+          <Toaster position="bottom-right" />
         </div>
       </div>
     </ThemeProvider>

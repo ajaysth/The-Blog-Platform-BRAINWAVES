@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "react-hot-toast";
 import { TopLoader as NextTopLoader } from "next-top-loader";
 
 const playfairDisplay = Playfair_Display({
@@ -39,7 +39,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <NextTopLoader color="var(--loader-color)" />
-          <Toaster />
+          <Toaster position="bottom-right" />
           {children}
         </ThemeProvider>
       </body>

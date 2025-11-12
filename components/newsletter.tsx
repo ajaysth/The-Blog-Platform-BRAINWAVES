@@ -4,22 +4,19 @@ import { useState } from "react";
 import { Mail, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
 
 const Newsletter = () => {
   const [email, setEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (email) {
       setIsSubscribed(true);
-      toast({
-        title: "Successfully subscribed!",
-        description:
-          "Welcome to our newsletter. Check your email for confirmation.",
-      });
+      toast.success(
+        "Successfully subscribed! Welcome to our newsletter. Check your email for confirmation."
+      );
 
       setTimeout(() => {
         setEmail("");

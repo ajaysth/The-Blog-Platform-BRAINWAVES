@@ -6,11 +6,8 @@ import { motion, useInView, animate } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useRef } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
 
 const Hero = () => {
-  const { toast } = useToast();
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-background via-secondary/30 to-accent-soft py-16 lg:py-24">
       <div className="container mx-auto px-4">
@@ -70,28 +67,6 @@ const Hero = () => {
               >
                 Start Reading
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-
-              <Button
-                size="lg"
-                variant="outline"
-                className="rounded-full px-8 h-12 text-base font-semibold border-2 hover:bg-muted transition-smooth"
-                onClick={() =>
-                  toast({
-                    title: "Event has been created",
-                    description: "Sunday, December 03, 2023 at 9:00 AM",
-                    action: (
-                      <ToastAction
-                        altText="Undo"
-                        onClick={() => console.log("Undo")}
-                      >
-                        Undo
-                      </ToastAction>
-                    ),
-                  })
-                }
-              >
-                Show Toast
               </Button>
             </motion.div>
 
