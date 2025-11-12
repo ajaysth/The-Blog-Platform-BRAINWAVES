@@ -85,14 +85,14 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: 0, 0%, 15%;
-  --sidebar-foreground: 0, 0%, 100%;
-  --sidebar-primary: 217, 91%, 60%;
-  --sidebar-primary-foreground: 0, 0%, 100%;
-  --sidebar-accent: 0, 0%, 25%;
-  --sidebar-accent-foreground: 0, 0%, 100%;
-  --sidebar-border: 0, 0%, 25%;
-  --sidebar-ring: 217, 91%, 60%;
+  --sidebar: 0 0% 100%; /* White background for light mode sidebar */
+  --sidebar-foreground: 160 40% 15%; /* Dark text for light mode sidebar */
+  --sidebar-primary: 217 91% 60%; /* Blue for active link background */
+  --sidebar-primary-foreground: 0 0% 100%; /* White text for active link */
+  --sidebar-accent: 40 20% 90%; /* Light grey for hover background */
+  --sidebar-accent-foreground: 160 40% 15%; /* Dark text for hover */
+  --sidebar-border: 40 20% 85%; /* Light grey for border */
+  --sidebar-ring: 217 91% 60%;
 
   /* Gradients */
   --gradient-hero: linear-gradient(135deg, hsl(160 60% 35%), hsl(160 60% 45%));

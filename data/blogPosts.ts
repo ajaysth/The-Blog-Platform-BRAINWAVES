@@ -2,6 +2,51 @@ import techImage from "@/public/tech-featured.jpg";
 import designImage from "@/public/design-featured.jpg";
 import cultureImage from "@/public/culture-featured.jpg";
 
+export const categories = [
+  {
+    id: "technology",
+    name: "Technology",
+    slug: "technology",
+    count: 45,
+    color: "from-purple-500 to-pink-500",
+  },
+  {
+    id: "ai",
+    name: "Artificial Intelligence",
+    slug: "ai",
+    count: 38,
+    color: "from-blue-500 to-cyan-500",
+  },
+  {
+    id: "productivity",
+    name: "Productivity",
+    slug: "productivity",
+    count: 52,
+    color: "from-green-500 to-emerald-500",
+  },
+  {
+    id: "science",
+    name: "Science",
+    slug: "science",
+    count: 41,
+    color: "from-orange-500 to-red-500",
+  },
+  {
+    id: "business",
+    name: "Business",
+    slug: "business",
+    count: 36,
+    color: "from-yellow-500 to-orange-500",
+  },
+  {
+    id: "design",
+    name: "Design",
+    slug: "design",
+    count: 29,
+    color: "from-pink-500 to-rose-500",
+  },
+];
+
 export const blogPosts = [
   {
     id: "1",
@@ -10,7 +55,7 @@ export const blogPosts = [
       "Artificial intelligence is reshaping industries at an unprecedented pace. From creative tools to business automation, discover how AI is becoming an essential partner in innovation and productivity.",
     image: techImage,
     category: "Technology",
-    slug: "exploring-hidden-cultural-gems-around-the-world",
+    slug: "future-of-ai",
     author: {
       name: "Sarah Chen",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
@@ -18,6 +63,9 @@ export const blogPosts = [
     date: "Mar 15, 2024",
     readTime: "8 min read",
     featured: true,
+    tags: ["AI", "Future Tech", "Productivity"],
+    likes: 1200,
+    comments: 45,
   },
   {
     id: "2",
@@ -26,7 +74,7 @@ export const blogPosts = [
       "Learn how to create serene, functional spaces that enhance your daily life through intentional design choices and thoughtful curation.",
     image: designImage,
     category: "Design",
-    slug: "exploring-hidden-cultural-gems-around-the-world",
+    slug: "minimalist-design-principles",
     author: {
       name: "Marcus Rivera",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus",
@@ -34,11 +82,14 @@ export const blogPosts = [
     date: "Mar 14, 2024",
     readTime: "6 min read",
     featured: false,
+    tags: ["Minimalism", "Interior Design", "Lifestyle"],
+    likes: 850,
+    comments: 22,
   },
   {
     id: "3",
     title: "Exploring Hidden Cultural Gems Around the World",
-    slug: "exploring-hidden-cultural-gems-around-the-world",
+    slug: "exploring-hidden-cultural-gems",
     excerpt:
       "Journey through lesser-known destinations that offer rich cultural experiences and authentic connections with local communities.",
     image: cultureImage,
@@ -50,11 +101,14 @@ export const blogPosts = [
     date: "Mar 13, 2024",
     readTime: "10 min read",
     featured: false,
+    tags: ["Travel", "Culture", "Adventure"],
+    likes: 1500,
+    comments: 78,
   },
   {
     id: "4",
     title: "Sustainable Living: Small Changes, Big Impact",
-    slug: "exploring-hidden-cultural-gems-around-the-world",
+    slug: "sustainable-living-tips",
     excerpt:
       "Practical tips and inspiring stories about reducing your environmental footprint without sacrificing quality of life.",
     image: designImage,
@@ -66,6 +120,9 @@ export const blogPosts = [
     date: "Mar 12, 2024",
     readTime: "7 min read",
     featured: false,
+    tags: ["Sustainability", "Eco-Friendly", "Lifestyle"],
+    likes: 980,
+    comments: 33,
   },
   {
     id: "5",
@@ -73,7 +130,7 @@ export const blogPosts = [
     excerpt:
       "Strategies for fostering collaboration, maintaining culture, and achieving excellence in distributed work environments.",
     image: techImage,
-    slug: "exploring-hidden-cultural-gems-around-the-world",
+    slug: "remote-work-strategies",
     category: "Technology",
     author: {
       name: "David Park",
@@ -82,11 +139,14 @@ export const blogPosts = [
     date: "Mar 11, 2024",
     readTime: "9 min read",
     featured: false,
+    tags: ["Remote Work", "Team Collaboration", "Productivity"],
+    likes: 1100,
+    comments: 50,
   },
   {
     id: "6",
     title: "Typography Trends Shaping Digital Experiences in 2024",
-    slug: "exploring-hidden-cultural-gems-around-the-world",
+    slug: "typography-trends-2024",
     excerpt:
       "Explore how modern typography choices influence user experience, brand identity, and digital storytelling.",
     image: designImage,
@@ -98,21 +158,27 @@ export const blogPosts = [
     date: "Mar 10, 2024",
     readTime: "5 min read",
     featured: false,
+    tags: ["Typography", "Web Design", "UX"],
+    likes: 720,
+    comments: 18,
   },
   {
     id: "7",
-    title: "Typogrsdsdsdsaphy Trends Shaping Digital Experiences in 2024",
+    title: "The Science of Sleep: How to Improve Your Rest and Recovery",
     excerpt:
-      "Explorsdse how modern typography choices influence user experience, brand identity, and digital storytelling.",
-    image: designImage,
-    category: "Desiddgn",
-    slug: "exploring-hidden-cultural-gems-around-the-world",
+      "Dive into the science behind sleep and discover actionable strategies to enhance your sleep quality for better health and performance.",
+    image: cultureImage,
+    category: "Science",
+    slug: "science-of-sleep",
     author: {
-      name: "Lisa sdAnderson",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa",
+      name: "Dr. Evelyn Reed",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Evelyn",
     },
-    date: "Mar 10, 2024",
-    readTime: "53 min read",
+    date: "Mar 9, 2024",
+    readTime: "11 min read",
     featured: false,
+    tags: ["Health", "Science", "Wellness"],
+    likes: 1800,
+    comments: 95,
   },
 ];

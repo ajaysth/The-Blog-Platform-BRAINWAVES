@@ -25,7 +25,7 @@ const menuItems = [
 ];
 
 export function AdminSidebar() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
   return (
@@ -49,6 +49,8 @@ export function AdminSidebar() {
           max-sm:fixed max-sm:left-0 max-sm:top-0 max-sm:h-full max-sm:z-40
           ${!isOpen && "max-sm:hidden"}
         `}
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
       >
         {/* Logo Section */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border">
@@ -62,16 +64,6 @@ export function AdminSidebar() {
               </span>
             </div>
           )}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-1 hover:bg-sidebar-accent rounded-lg transition-colors"
-          >
-            <ChevronRight
-              className={`w-5 h-5 text-sidebar-foreground transition-transform ${
-                !isOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
         </div>
 
         {/* Navigation */}
@@ -87,7 +79,7 @@ export function AdminSidebar() {
                 whileHover={{ scale: 1.05 }}
                 className={`rounded-lg ${
                   isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    ? "bg-blue-500 text-white"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
                 }`}
               >

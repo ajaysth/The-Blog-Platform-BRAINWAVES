@@ -3,18 +3,29 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Clock, Share2, Bookmark } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, Bookmark, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { blogPosts } from "@/data/blogPosts";
-import BlogCard from "@/components/blog-card";
+import { blogPosts, categories } from "@/data/blogPosts";
+import { BlogPostCard } from "@/components/blog-post-card";
+import { BlogPostFilters } from "@/components/blog-post-filters";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function BlogPost() {
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug;
   const post = blogPosts.find((p) => p.slug === slug);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500); // Simulate a 1.5 second loading time
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!post) {
     return (
@@ -190,11 +201,52 @@ export default function BlogPost() {
               <h2 className="text-3xl font-display font-bold text-foreground mb-8">
                 Related Articles
               </h2>
-              <div className="grid md:grid-cols-3 gap-8">
-                {relatedPosts.map((relatedPost) => (
-                  <BlogCard key={relatedPost.id} {...relatedPost} />
-                ))}
-              </div>
+              <BlogPostFilters posts={relatedPosts} loading={loading}>
+                {(filteredPosts) => (
+                  <AnimatePresence mode="wait">
+                    {filteredPosts.length === 0 ? (
+                      <motion.div
+                        key="no-results"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="text-center py-20"
+                      >
+                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
+                          <Search className="w-10 h-10 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-2xl font-bold mb-4">
+                          No articles found
+                        </h3>
+                        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                          Try adjusting your search or filters to find what
+                          you&apos;re looking for.
+                        </p>
+                        <Button variant="outline">Clear Filters</Button>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="results"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                      >
+                        {filteredPosts.map((post) => (
+                          <BlogPostCard
+                            key={post.id}
+                            post={post}
+                            category={categories.find(
+                              (c) => c.name === post.category
+                            )}
+                            selectedTags={[]}
+                          />
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
+              </BlogPostFilters>
             </div>
           )}
         </article>

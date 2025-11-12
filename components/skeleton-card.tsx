@@ -5,7 +5,7 @@ interface ShimmerCardOneInterface {
   imageShimmerClassName?: string;
 }
 
-export default function ShimmerCardOne({
+export default function SkeletonCard({
   descriptionLineCount = 1,
   rating = true,
   className = "",

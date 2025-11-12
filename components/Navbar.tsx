@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useEffect, FC, useRef } from "react";                                                                                                                                                         
-import Link from "next/link";                                                      
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+import { useState, useEffect, FC, useRef } from "react";
+import Link from "next/link";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
 
 import {
   Menu,
@@ -88,7 +93,7 @@ const Navbar: FC = () => {
               onMouseEnter={handleCategoryMouseEnter}
               onMouseLeave={handleCategoryMouseLeave}
             >
-              <NavLink href="#" icon={<Grid3x3 />}>
+              <NavLink href="/category" icon={<Grid3x3 />}>
                 Categories
               </NavLink>
               <AnimatePresence>
