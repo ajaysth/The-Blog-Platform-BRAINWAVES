@@ -45,6 +45,20 @@ export const categories = [
     count: 29,
     color: "from-pink-500 to-rose-500",
   },
+  {
+    id: "culture",
+    name: "Culture",
+    slug: "culture",
+    count: 25,
+    color: "from-indigo-500 to-purple-500",
+  },
+  {
+    id: "lifestyle",
+    name: "Lifestyle",
+    slug: "lifestyle",
+    count: 32,
+    color: "from-teal-500 to-cyan-500",
+  },
 ];
 
 export const blogPosts = [

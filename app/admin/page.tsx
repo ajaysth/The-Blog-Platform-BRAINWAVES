@@ -30,7 +30,7 @@ export default function AdminDashboard() {
           Dashboard
         </h1>
         <p className="text-muted-foreground mt-2">
-          Welcome to your blog management system. Here's your content overview.
+          Welcome to your blog management system. Here&apos;s your content overview.
         </p>
       </motion.div>
       <motion.div variants={itemVariants}>

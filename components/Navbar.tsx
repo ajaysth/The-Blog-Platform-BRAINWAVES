@@ -38,6 +38,7 @@ const Navbar: FC = () => {
 
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setMounted(true);
   }, []);
 
@@ -241,71 +242,5 @@ const NavLink: FC<{
   );
 };
 
-const CategoryCard: FC<{ category: any }> = ({ category }) => {
-  const ref = useRef<HTMLAnchorElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const xTransform = useTransform(x, [-100, 100], [-10, 10]);
-  const yTransform = useTransform(y, [-100, 100], [-10, 10]);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      x.set(e.clientX - rect.left - rect.width / 2);
-      y.set(e.clientY - rect.top - rect.height / 2);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  return (
-    <motion.a
-      ref={ref}
-      key={category.name}
-      href={`/categories/${category.name.toLowerCase()}`}
-      className="group relative block overflow-hidden rounded-xl"
-      style={{
-        rotateX: yTransform,
-        rotateY: xTransform,
-        transformStyle: "preserve-3d",
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      whileHover="hover"
-    >
-      <div
-        className="absolute inset-0"
-        style={{ transform: "translateZ(8px)" }}
-      >
-        <motion.img
-          src={category.image}
-          alt={category.name}
-          className="absolute inset-0 w-full h-full object-cover"
-          variants={{ hover: { scale: 1.2 } }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-        />
-        <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
-      </div>
-      <div
-        className="absolute inset-0 p-4 flex flex-col justify-end"
-        style={{ transform: "translateZ(16px)" }}
-      >
-        <h3 className="font-bold text-white text-shadow-lg">{category.name}</h3>
-        <p className="text-xs text-white/80 text-shadow">{category.count}</p>
-      </div>
-      <motion.div
-        className="absolute top-4 right-4 text-2xl opacity-80"
-        style={{ transform: "translateZ(24px)" }}
-        variants={{ hover: { scale: 1.2, rotate: 15 } }}
-      >
-        {category.icon}
-      </motion.div>
-    </motion.a>
-  );
-};
 
 export default Navbar;
