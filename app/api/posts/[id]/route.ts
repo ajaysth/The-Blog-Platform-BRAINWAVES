@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     const post = await prisma.post.findUnique({
       where: { id },
       include: {
@@ -29,29 +29,49 @@ export async function GET(
 }
 
 export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session || !session.user) {
+  if (!session || !session.user || !session.user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const id = params.id;
+    const { id } = await context.params;
     const body = await req.json();
-    const { title, content, categoryId, published, featuredImage, slug } = body;
+    const { title, content, categoryId, published, featuredImage, slug } =
+      body;
+
+    const dataToUpdate: {
+      title: string;
+      content: string;
+      categoryId: string;
+      featuredImage?: string;
+      slug: string;
+      authorId: string;
+      status?: "PUBLISHED" | "DRAFT" | "ARCHIVED";
+      publishedAt?: Date | null;
+    } = {
+      title,
+      content,
+      categoryId,
+      featuredImage,
+      slug,
+      authorId: session.user.id,
+    };
+
+    if (published === true) {
+      dataToUpdate.status = "PUBLISHED";
+      dataToUpdate.publishedAt = new Date();
+    } else if (published === false) {
+      dataToUpdate.status = "DRAFT";
+      dataToUpdate.publishedAt = null;
+    }
+
     const post = await prisma.post.update({
       where: { id },
-      data: {
-        title,
-        content,
-        published,
-        categoryId,
-        featuredImage,
-        slug,
-        authorId: session.user.id,
-      },
+      data: dataToUpdate,
     });
     return NextResponse.json(post);
   } catch (error) {
@@ -64,11 +84,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     await prisma.post.delete({
       where: { id },
     });

@@ -30,7 +30,7 @@ const userFormSchema = z.object({
   }),
 });
 
-type UserFormValues = z.infer<typeof userFormSchema>;
+export type UserFormValues = z.infer<typeof userFormSchema>;
 
 interface UserFormProps {
   onSubmit: (data: UserFormValues) => void;

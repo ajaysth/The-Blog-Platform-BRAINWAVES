@@ -12,8 +12,19 @@ import {
 } from "@/components/ui/select";
 import { Post, Category, User } from "@prisma/client";
 
+// This is the DTO that the API expects
+export interface PostFormData {
+  title: string;
+  content: string;
+  categoryId: string;
+  authorId: string;
+  published: boolean;
+  slug: string;
+  featuredImage?: string;
+}
+
 interface PostFormProps {
-  onSubmit: (postData: Omit<Post, "id">) => void;
+  onSubmit: (postData: PostFormData) => void;
   initialData?: Post | null;
 }
 
@@ -32,7 +43,7 @@ const PostForm = ({ onSubmit, initialData }: PostFormProps) => {
       setContent(initialData.content || "");
       setCategoryId(initialData.categoryId || "");
       setAuthorId(initialData.authorId);
-      setPublished(initialData.published);
+      setPublished(initialData.status === "PUBLISHED");
     }
   }, [initialData]);
 
@@ -69,9 +80,7 @@ const PostForm = ({ onSubmit, initialData }: PostFormProps) => {
       published,
       categoryId,
       authorId,
-      featuredImage: "",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      featuredImage: "", // This is still a placeholder, but now it matches the DTO
       slug: title.toLowerCase().replace(/\s+/g, "-"),
     });
   };

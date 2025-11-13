@@ -65,7 +65,7 @@ const CategoryPage = () => {
       {/* Main Content */}
       <main className="py-12">
         <div className="container mx-auto px-4">
-          <BlogPostFilters posts={categoryPosts}>
+          <BlogPostFilters posts={categoryPosts} loading={false}>
             {(filteredPosts) => (
               <AnimatePresence mode="wait">
                 {filteredPosts.length === 0 ? (

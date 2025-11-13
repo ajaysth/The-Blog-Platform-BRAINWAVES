@@ -1,26 +1,47 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session || !session.user) {
+  if (!session || !session.user || !session.user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const body = await request.json();
-    const { title, content, categoryId, published, featuredImage, slug } = body;
+    const { title, content, categoryId, published, featuredImage, slug } =
+      body;
+
+    const dataToCreate: {
+      title: string;
+      content: string;
+      categoryId: string;
+      featuredImage?: string;
+      slug: string;
+      authorId: string;
+      status?: "PUBLISHED" | "DRAFT" | "ARCHIVED";
+      publishedAt?: Date | null;
+    } = {
+      title,
+      content,
+      categoryId,
+      featuredImage,
+      slug,
+      authorId: session.user.id,
+    };
+
+    if (published === true) {
+      dataToCreate.status = "PUBLISHED";
+      dataToCreate.publishedAt = new Date();
+    } else {
+      dataToCreate.status = "DRAFT";
+      dataToCreate.publishedAt = null;
+    }
+
     const post = await prisma.post.create({
-      data: {
-        title,
-        content,
-        published,
-        categoryId,
-        featuredImage,
-        slug,
-        authorId: session.user.id,
-      },
+      data: dataToCreate,
     });
     return NextResponse.json(post, { status: 201 });
   } catch (error) {
@@ -43,7 +64,7 @@ export async function GET(request: Request) {
   const offset = (page - 1) * limit;
 
   try {
-    const where = search
+    const where: Prisma.PostWhereInput = search
       ? {
           OR: [
             { title: { contains: search, mode: "insensitive" } },

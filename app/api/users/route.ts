@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { hash } from "bcryptjs";
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
   const offset = (page - 1) * limit;
 
   try {
-    const where = search
+    const where: Prisma.UserWhereInput = search
       ? {
           OR: [
             { name: { contains: search, mode: "insensitive" } },

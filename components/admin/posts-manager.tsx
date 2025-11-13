@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Post } from "@prisma/client";
-import PostForm from "./post/post-form";
+import PostForm, { PostFormData } from "./post/post-form";
 import HeroTable from "./hero-table";
 import { PageTransition } from "./page-transition";
 import { PageHeader } from "./page-header";
@@ -31,17 +31,23 @@ const ITEMS_PER_PAGE_CLIENT_SIDE = 10; // Define how many items to show per page
 
 const PostsManager = () => {
   const [allPosts, setAllPosts] = useState<PostWithRelations[]>([]); // Stores all posts fetched from server
-  const [filteredAndSortedPosts, setFilteredAndSortedPosts] = useState<PostWithRelations[]>([]); // Posts currently displayed in the table
+  const [filteredAndSortedPosts, setFilteredAndSortedPosts] = useState<
+    PostWithRelations[]
+  >([]); // Posts currently displayed in the table
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<PostWithRelations | null>(null);
+  const [selectedPost, setSelectedPost] =
+    useState<PostWithRelations | null>(null);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [sort, setSort] = useState<{ column: string; direction: "asc" | "desc" } | null>({ column: "createdAt", direction: "desc" });
+  const [sort, setSort] = useState<{
+    column: string;
+    direction: "asc" | "desc";
+  } | null>({ column: "createdAt", direction: "desc" });
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -58,7 +64,8 @@ const PostsManager = () => {
     } catch (error) {
       console.error("Failed to fetch all posts:", error);
       toast.error("Failed to fetch all posts.");
-    } finally {
+    }
+    finally {
       setLoading(false);
     }
   }, []);
@@ -73,11 +80,18 @@ const PostsManager = () => {
 
     // 1. Apply client-side search
     if (debouncedSearch) {
-      processedPosts = processedPosts.filter(post =>
-        post.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        post.content.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        post.author.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        post.category.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+      processedPosts = processedPosts.filter(
+        (post) =>
+          post.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          post.content
+            .toLowerCase()
+            .includes(debouncedSearch.toLowerCase()) ||
+          post.author.name
+            .toLowerCase()
+            .includes(debouncedSearch.toLowerCase()) ||
+          post.category.name
+            .toLowerCase()
+            .includes(debouncedSearch.toLowerCase())
       );
     }
 
@@ -87,18 +101,20 @@ const PostsManager = () => {
         const aValue = getNestedProperty(a, sort.column);
         const bValue = getNestedProperty(b, sort.column);
 
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          return sort.direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sort.direction === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
         }
-        if (typeof aValue === 'number' && typeof bValue === 'number') {
-          return sort.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return sort.direction === "asc" ? aValue - bValue : bValue - aValue;
         }
         // Handle boolean for 'published'
-        if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
-          if (sort.direction === 'asc') {
-            return (aValue === bValue) ? 0 : aValue ? 1 : -1;
+        if (typeof aValue === "boolean" && typeof bValue === "boolean") {
+          if (sort.direction === "asc") {
+            return aValue === bValue ? 0 : aValue ? 1 : -1;
           } else {
-            return (aValue === bValue) ? 0 : aValue ? -1 : 1;
+            return aValue === bValue ? 0 : aValue ? -1 : 1;
           }
         }
         // Fallback for other types or if values are null/undefined
@@ -110,12 +126,15 @@ const PostsManager = () => {
     const startIndex = (page - 1) * ITEMS_PER_PAGE_CLIENT_SIDE;
     const endIndex = startIndex + ITEMS_PER_PAGE_CLIENT_SIDE;
     setFilteredAndSortedPosts(processedPosts.slice(startIndex, endIndex));
-    setTotalPages(Math.ceil(processedPosts.length / ITEMS_PER_PAGE_CLIENT_SIDE));
-
+    setTotalPages(
+      Math.ceil(processedPosts.length / ITEMS_PER_PAGE_CLIENT_SIDE)
+    );
   }, [allPosts, debouncedSearch, page, sort]); // Dependencies for client-side processing
 
-  const handleFormSubmit = async (postData: Omit<Post, "id">) => {
-    const toastId = toast.loading(selectedPost ? "Updating post..." : "Creating post...");
+  const handleFormSubmit = async (postData: PostFormData) => {
+    const toastId = toast.loading(
+      selectedPost ? "Updating post..." : "Creating post..."
+    );
     try {
       const response = await fetch(
         selectedPost ? `/api/posts/${selectedPost.id}` : "/api/posts",
@@ -130,10 +149,17 @@ const PostsManager = () => {
         fetchAllPosts(); // Re-fetch all posts to update client-side store
         setIsDialogOpen(false);
         setSelectedPost(null);
-        toast.success(selectedPost ? "Post updated successfully." : "Post created successfully.", { id: toastId });
+        toast.success(
+          selectedPost
+            ? "Post updated successfully."
+            : "Post created successfully.",
+          { id: toastId }
+        );
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to save post.", { id: toastId });
+        toast.error(errorData.error || "Failed to save post.", {
+          id: toastId,
+        });
       }
     } catch (error) {
       console.error("Failed to save post:", error);
@@ -166,7 +192,9 @@ const PostsManager = () => {
           toast.success("Post deleted successfully.", { id: toastId });
         } else {
           const errorData = await response.json();
-          toast.error(errorData.error || "Failed to delete post.", { id: toastId });
+          toast.error(errorData.error || "Failed to delete post.", {
+            id: toastId,
+          });
         }
       } catch (error) {
         console.error("Failed to delete post:", error);
@@ -179,7 +207,7 @@ const PostsManager = () => {
     { header: "Title", accessor: "title" },
     { header: "Author", accessor: "author.name" },
     { header: "Category", accessor: "category.name" },
-    { header: "Published", accessor: "published" },
+    { header: "Status", accessor: "status" },
     { header: "Created At", accessor: "createdAt" },
   ];
 

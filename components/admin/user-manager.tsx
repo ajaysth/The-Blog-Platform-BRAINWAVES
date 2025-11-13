@@ -16,7 +16,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import { User } from "@prisma/client";
-import { UserForm } from "./user/user-form";
+import { UserForm, UserFormValues } from "./user/user-form";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -91,8 +91,10 @@ export function UserManager() {
     if (debouncedSearch) {
       processedUsers = processedUsers.filter(
         (user) =>
-          user.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-          user.email.toLowerCase().includes(debouncedSearch.toLowerCase())
+          (user.name &&
+            user.name.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
+          (user.email &&
+            user.email.toLowerCase().includes(debouncedSearch.toLowerCase()))
       );
     }
 
@@ -131,9 +133,7 @@ export function UserManager() {
     );
   }, [allUsers, debouncedSearch, selectedRoleFilter, page, sort]); // Dependencies for client-side processing
 
-  const handleFormSubmit = async (
-    userData: Omit<User, "id" | "createdAt" | "updatedAt" | "emailVerified">
-  ) => {
+  const handleFormSubmit = async (userData: UserFormValues) => {
     const toastId = toast.loading(
       selectedUser ? "Updating user..." : "Creating user..."
     );
@@ -292,7 +292,15 @@ export function UserManager() {
           </DialogHeader>
           <UserForm
             onSubmit={handleFormSubmit}
-            initialData={selectedUser ? { name: selectedUser.name, email: selectedUser.email, role: selectedUser.role } : null}
+            initialData={
+              selectedUser
+                ? {
+                    name: selectedUser.name || "",
+                    email: selectedUser.email || "",
+                    role: selectedUser.role,
+                  }
+                : null
+            }
           />
         </DialogContent>
       </Dialog>

@@ -3,11 +3,10 @@ import prisma from "@/lib/prisma";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const awaitedParams = await params;
-    const id = awaitedParams.id;
+    const { id } = await context.params;
     await prisma.tag.delete({
       where: { id },
     });
@@ -23,11 +22,10 @@ export async function DELETE(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const awaitedParams = await params;
-    const id = awaitedParams.id;
+    const { id } = await context.params;
     const body = await req.json();
     const { name, slug } = body;
     const tag = await prisma.tag.update({
