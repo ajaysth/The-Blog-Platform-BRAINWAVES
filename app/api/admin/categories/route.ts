@@ -5,19 +5,63 @@ import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const all = searchParams.get("all");
+  const search = searchParams.get("search") || "";
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const sort = searchParams.get("sort") || "createdAt";
+  const direction = searchParams.get("direction") || "desc";
+  const limit = 10;
+  const offset = (page - 1) * limit;
+
   try {
-    const categories = await prisma.category.findMany({
-      include: {
-        _count: {
-          select: { posts: true },
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { slug: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : {};
+
+    let categories;
+    let totalCategories;
+
+    if (all === "true") {
+      categories = await prisma.category.findMany({
+        where,
+        include: {
+          _count: {
+            select: { posts: true },
+          },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-    return NextResponse.json({ data: categories, total: categories.length });
+        orderBy: {
+          [sort]: direction,
+        },
+      });
+      totalCategories = categories.length; // If fetching all, totalCategories is simply the count of fetched categories
+    } else {
+      categories = await prisma.category.findMany({
+        where,
+        include: {
+          _count: {
+            select: { posts: true },
+          },
+        },
+        orderBy: {
+          [sort]: direction,
+        },
+        skip: offset,
+        take: limit,
+      });
+      totalCategories = await prisma.category.count({ where });
+    }
+
+    const totalPages = Math.ceil(totalCategories / limit);
+
+    return NextResponse.json({ data: categories, totalPages, totalCategories });
   } catch (error) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(

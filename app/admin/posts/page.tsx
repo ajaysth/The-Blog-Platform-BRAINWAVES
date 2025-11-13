@@ -1,19 +1,13 @@
-"use client";
+import PostsManager from "@/components/admin/posts-manager";
+import { PageHeader } from "@/components/admin/page-header";
+import { PageTransition } from "@/components/admin/page-transition";
 
-import { PostsManager } from "@/components/admin/posts-manager";
-
-export default function PostsPage() {
+const PostsPage = () => {
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-playfair-display font-bold text-foreground">
-          Blog Posts
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Create, edit, and manage your blog posts
-        </p>
-      </div>
+    <PageTransition>
       <PostsManager />
-    </div>
+    </PageTransition>
   );
-}
+};
+
+export default PostsPage;

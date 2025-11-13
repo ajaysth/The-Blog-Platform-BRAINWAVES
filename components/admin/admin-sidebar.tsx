@@ -20,7 +20,7 @@ const menuItems = [
   { name: "Posts", href: "/admin/posts", icon: FileText },
   { name: "Categories", href: "/admin/categories", icon: Folder },
   { name: "Tags", href: "/admin/tags", icon: Tag },
-  { name: "Authors", href: "/admin/users", icon: Users },
+  { name: "Users", href: "/admin/users", icon: Users },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

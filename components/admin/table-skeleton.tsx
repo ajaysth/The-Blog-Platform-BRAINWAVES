@@ -49,7 +49,6 @@ export function TableSkeleton({
                   className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"
                   style={{
                     animationDelay: `${(rowIndex * columns + colIndex) * 50}ms`,
-                    width: `${Math.random() * 40 + 60}%`, // Random width between 60-100%
                   }}
                 />
               </div>

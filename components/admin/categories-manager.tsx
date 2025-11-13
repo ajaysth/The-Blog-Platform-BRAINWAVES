@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { HeroTable, HeroColumn } from "@/components/admin/hero-table";
+import HeroTable from "@/components/admin/hero-table";
 import { PageHeader } from "@/components/admin/page-header";
 import { PageTransition } from "@/components/admin/page-transition";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/admin-utils";
 import { CategoryForm } from "@/components/admin/category/category-form";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Badge } from "@/components/ui/badge";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type Row = {
   id: string;
@@ -25,10 +26,86 @@ type Row = {
   };
 };
 
+// Utility function to get nested property
+const getNestedProperty = (obj: any, path: string) => {
+  return path.split(".").reduce((acc, part) => acc && acc[part], obj);
+};
+
+const ITEMS_PER_PAGE_CLIENT_SIDE = 10; // Define how many items to show per page client-side
+
 export default function CategoryPage() {
+  const [allCategories, setAllCategories] = useState<Row[]>([]); // Stores all categories fetched from server
+  const [filteredAndSortedCategories, setFilteredAndSortedCategories] = useState<Row[]>([]); // Categories currently displayed in the table
+  const [loading, setLoading] = useState(true);
   const [editingCategory, setEditingCategory] = useState<Row | null>(null);
-  const [tableKey, setTableKey] = useState(0); // reload table
   const [deleteCategory, setDeleteCategory] = useState<Row | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sort, setSort] = useState<{ column: string; direction: "asc" | "desc" } | null>({ column: "createdAt", direction: "desc" });
+
+  const debouncedSearch = useDebounce(search, 500);
+
+  // Fetch all categories initially from the server
+  const fetchAllCategories = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Request all categories from the API, or a very large number if "all" is too much
+      // The API should still return total count for proper pagination calculation
+      const response = await fetch(`/api/admin/categories?all=true`); // Assuming API can handle an 'all' parameter
+      const data = await response.json();
+      setAllCategories(data.data);
+      // totalPages will be calculated client-side based on filteredAndSortedCategories length
+    } catch (error) {
+      console.error("Failed to fetch all categories:", error);
+      toast.error("Failed to fetch all categories");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAllCategories();
+  }, [fetchAllCategories]);
+
+  // Client-side filtering, sorting, and pagination
+  useEffect(() => {
+    let processedCategories = [...allCategories];
+
+    // 1. Apply client-side search
+    if (debouncedSearch) {
+      processedCategories = processedCategories.filter(category =>
+        category.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        category.slug.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (category.description && category.description.toLowerCase().includes(debouncedSearch.toLowerCase()))
+      );
+    }
+
+    // 2. Apply client-side sort
+    if (sort) {
+      processedCategories.sort((a, b) => {
+        const aValue = getNestedProperty(a, sort.column);
+        const bValue = getNestedProperty(b, sort.column);
+
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sort.direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        }
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sort.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        // Fallback for other types or if values are null/undefined
+        return 0;
+      });
+    }
+
+    // 3. Apply client-side pagination
+    const startIndex = (page - 1) * ITEMS_PER_PAGE_CLIENT_SIDE;
+    const endIndex = startIndex + ITEMS_PER_PAGE_CLIENT_SIDE;
+    setFilteredAndSortedCategories(processedCategories.slice(startIndex, endIndex));
+    setTotalPages(Math.ceil(processedCategories.length / ITEMS_PER_PAGE_CLIENT_SIDE));
+
+  }, [allCategories, debouncedSearch, page, sort]); // Dependencies for client-side processing
 
   const handleAddCategory = () => setEditingCategory({} as Row);
   const handleEditCategory = (category: Row) => setEditingCategory(category);
@@ -36,7 +113,7 @@ export default function CategoryPage() {
 
   const handleSave = () => {
     setEditingCategory(null);
-    setTableKey((prev) => prev + 1);
+    fetchAllCategories(); // Re-fetch all categories to update client-side store
   };
 
   const confirmDeleteCategory = async () => {
@@ -48,7 +125,7 @@ export default function CategoryPage() {
       });
       if (res.ok) {
         toast.success("Category deleted successfully");
-        setTableKey((prev) => prev + 1);
+        fetchAllCategories(); // Re-fetch all categories to update client-side store
       } else {
         const errorData = await res.json();
         toast.error(errorData.message || "Failed to delete category");
@@ -61,15 +138,15 @@ export default function CategoryPage() {
     }
   };
 
-  const columns: HeroColumn<Row>[] = [
+  const columns = [
     {
-      key: "catimage",
-      label: "Image",
-      render: (r) => (
+      header: "Image",
+      accessor: "catimage",
+      cell: (item: Row) => (
         <div className="w-16 h-16 relative">
           <Image
-            src={r.catimage || "/product_placeholder.jpeg"}
-            alt={r.name}
+            src={item.catimage || "/product_placeholder.jpeg"}
+            alt={item.name}
             fill
             className="object-cover rounded-md"
           />
@@ -77,40 +154,32 @@ export default function CategoryPage() {
       ),
     },
     {
-      key: "name",
-      label: "Name",
-      sortable: true,
-      render: (r) => <span className="font-medium">{r.name}</span>,
+      header: "Name",
+      accessor: "name",
     },
     {
-      key: "slug",
-      label: "Slug",
-      sortable: true,
-      render: (r) => <span className="font-mono text-sm">{r.slug}</span>,
+      header: "Slug",
+      accessor: "slug",
     },
     {
-      key: "description",
-      label: "Description",
-      render: (r) => r.description || "—",
+      header: "Description",
+      accessor: "description",
     },
     {
-      key: "_count",
-      label: "Posts",
-      sortable: true,
-      render: (r) => <Badge variant="outline">{r._count.posts}</Badge>,
+      header: "Posts",
+      accessor: "_count.posts",
+      cell: (item: Row) => <Badge variant="outline">{item._count.posts}</Badge>,
     },
     {
-      key: "createdAt",
-      label: "Created At",
-      sortable: true,
-      render: (r) => formatDate(r.createdAt),
-    },
-  ];
-
+      header: "Created At",
+      accessor: "createdAt",
+            cell: (item: Row) => formatDate(item.createdAt),
+          },
+        ];
   return (
     <PageTransition>
       <div className="space-y-6">
-        <PageHeader title="Categories" />
+        <PageHeader title="Categories" className="font-playfair-display" />
 
         {editingCategory && (
           <div className="p-6 rounded-md shadow-md">
@@ -126,17 +195,22 @@ export default function CategoryPage() {
           </div>
         )}
 
-        <HeroTable<Row>
-          key={tableKey}
-          title="Category Management"
-          fetchUrl="/api/admin/categories"
+        <HeroTable
           columns={columns}
-          defaultSort="createdAt"
-          defaultOrder="desc"
-          pageSizeOptions={[10, 20, 50]}
-          onAdd={handleAddCategory}
+          data={filteredAndSortedCategories} // Use client-side processed data
+          loading={loading}
           onEdit={handleEditCategory}
-          onDelete={(category) => setDeleteCategory(category)}
+          onDelete={setDeleteCategory}
+          title="Category Management"
+          createButtonText="Add Category"
+          createButtonAction={handleAddCategory}
+          search={search}
+          setSearch={setSearch}
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+          sort={sort}
+          setSort={setSort}
         />
 
         <ConfirmationDialog
