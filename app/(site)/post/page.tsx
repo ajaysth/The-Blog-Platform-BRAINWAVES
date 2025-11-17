@@ -7,6 +7,8 @@ import { blogPosts, categories } from "@/data/blogPosts";
 import { BlogPostFilters } from "@/components/blog-post-filters";
 import { Search, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import flogoblack from "@/public/flogo-black.png";
 
 const BlogsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,7 +81,7 @@ const BlogsPage = () => {
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-full px-4 py-2 mb-6"
                 whileHover={{ scale: 1.05 }}
               >
-                <Sparkles className="h-4 w-4 text-primary" />
+                <Image src={flogoblack} alt="Sparkle" width={16} height={16} className="h-4 w-4" />
                 <span className="text-sm font-semibold text-primary">
                   Explore Our Articles
                 </span>

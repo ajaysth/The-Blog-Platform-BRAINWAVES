@@ -3,7 +3,17 @@
 import { useState, useEffect, FC } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import logoBlack from "@/public/logo-black.png";
+import logoWhite from "@/public/logo-white.png";
+import flogoblack from "@/public/flogo-black.png";
+import flogowhite from "@/public/flogo-white.png";
+import ltWhite from "@/public/lt-white.png";
+import ltBlack from "@/public/lt-black.png";
+import { Session } from "next-auth";
+import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
+import Image from "next/image";
 import {
   Menu,
   Code,
@@ -33,8 +43,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut } from "next-auth/react";
-import { Session } from "next-auth";
+
 
 interface NavbarClientProps {
   session: Session | null;
@@ -90,12 +99,30 @@ export const NavbarClient: FC<NavbarClientProps> = ({ session }) => {
             className="flex items-center space-x-2"
             whileHover="hover"
           >
-            <motion.div variants={{ hover: { rotate: 360, scale: 1.2 } }}>
-              <Sparkles className="text-primary h-6 w-6" />
-            </motion.div>
-            <span className="text-lg font-semibold text-foreground">
-              Brainwaves
-            </span>
+            {mounted && (
+              <motion.div
+                className="flex items-center space-x-2"
+                variants={{ hover: { scale: 1.1 } }}
+              >
+                <motion.div variants={{ hover: { rotate: 360 } }}>
+                  <Image
+                    src={theme === 'light' ? logoBlack : logoWhite}
+                    alt="Logo"
+                    className="h-12 w-14"
+                  />
+                </motion.div>
+
+                <motion.div >
+                  <Image
+                    src={theme === 'light' ? ltBlack : ltWhite}
+                    alt="Logo 2"
+                    className="h-6 w-40"
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+
+          
           </motion.a>
 
           <div className="hidden lg:flex items-center space-x-2 bg-secondary/50 p-1 rounded-full border border-border/30">

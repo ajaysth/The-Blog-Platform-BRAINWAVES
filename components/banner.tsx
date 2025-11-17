@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link"; // ✅ Use Next.js Link instead of react-router-dom
+import Image from "next/image";
+import flogowhite from "@/public/flogo-white.png";
 
 export default function Banner() {
   return (
@@ -28,7 +30,7 @@ export default function Banner() {
               viewport={{ once: true }}
               className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6"
             >
-              <Sparkles className="w-5 h-5" />
+              <Image src={flogowhite} alt="Sparkle" width={20} height={20} className="w-5 h-5" />
               <span className="font-medium">Join Our Community</span>
             </motion.div>
 

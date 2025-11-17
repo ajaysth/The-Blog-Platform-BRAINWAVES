@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
+import Image from "next/image";
+import flogowhite from "@/public/flogo-white.png";
 
 export default function SignInPage() {
   return (
@@ -15,7 +17,7 @@ export default function SignInPage() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1 text-center">
           <div className="mx-auto w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
-            <Sparkles className="text-white h-6 w-6" />
+            <Image src={flogowhite} alt="Logo" width={24} height={24} className="h-6 w-6" />
           </div>
           <CardTitle className="text-3xl font-bold font-playfair-display">
             Welcome to BrainWaves

@@ -1,8 +1,12 @@
 "use client";
 
-import React, { useState, FormEvent } from "react";
+import React, { useState, FormEvent, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
+import flogoblack from "@/public/flogo-black.png";
+import flogowhite from "@/public/flogo-white.png";
+import { useTheme } from "next-themes";
 import {
   Mail,
   Send,
@@ -49,6 +53,12 @@ interface SocialLink {
 export default function Footer() {
   const [email, setEmail] = useState<string>("");
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubscribe = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -154,10 +164,10 @@ export default function Footer() {
               >
                 <div className="relative">
                   <div className="absolute inset-0 bg-accent/20 blur-xl rounded-full group-hover:bg-accent/30 transition-all" />
-                  <Sparkles className="w-8 h-8 text-accent relative" />
+                  {mounted && <Image src={theme === 'light' ? flogoblack : flogowhite} alt="Logo" width={40} height={40} />}
                 </div>
                 <span className="text-2xl font-bold bg-gradient-to-r from-foreground to-accent bg-clip-text text-transparent">
-                  Brainwaves
+                  BRAINWAVES
                 </span>
               </Link>
 

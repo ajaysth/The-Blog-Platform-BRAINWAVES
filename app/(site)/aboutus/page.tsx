@@ -10,7 +10,6 @@ import {
   Users,
   Heart,
   Lightbulb,
-  Sparkles,
   Rocket,
   Target,
 } from "lucide-react";
@@ -33,7 +32,6 @@ const iconComponents = {
   Heart: Heart,
   Lightbulb: Lightbulb,
   Globe: Globe,
-  Sparkles: Sparkles,
   Rocket: Rocket,
   Target: Target,
 };
@@ -55,7 +53,7 @@ const defaultValues: AboutUsProps["values"] = [
     title: "Excellence",
     description:
       "We strive for perfection in everything we do, consistently delivering high-quality work.",
-    icon: "Sparkles",
+    icon: "Lightbulb",
   },
   {
     title: "Impact",

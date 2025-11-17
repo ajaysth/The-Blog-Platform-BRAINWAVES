@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import Image from "next/image";
+import flogoblack from "@/public/flogo-black.png";
 
 import { categories } from "@/data/blogPosts";
 import { ArrowRight, Layers, Sparkles } from "lucide-react";
@@ -45,7 +47,7 @@ const CategoriesPage = () => {
               transition={{ duration: 0.5 }}
               className="inline-flex items-center space-x-2 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-full px-6 py-2 mb-6 backdrop-blur-sm"
             >
-              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+              <Image src={flogoblack} alt="Sparkle" width={16} height={16} className="w-4 h-4" />
               <span className="text-sm font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Explore by Category
               </span>
