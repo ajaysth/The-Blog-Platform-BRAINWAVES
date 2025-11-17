@@ -4,6 +4,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "react-hot-toast";
 import { TopLoader as NextTopLoader } from "next-top-loader";
+import { Suspense } from "react";
+import { Infinity } from "ldrs/react";
+import "ldrs/react/Infinity.css";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair-display",
@@ -40,7 +43,22 @@ export default function RootLayout({
         >
           <NextTopLoader color="var(--loader-color)" />
           <Toaster position="bottom-right" />
-          {children}
+          <Suspense
+            fallback={
+              <div className="flex h-screen w-full items-center justify-center">
+                <Infinity
+                  size="55"
+                  stroke="4"
+                  strokeLength="0.15"
+                  bgOpacity="0.1"
+                  speed="1.3"
+                  color="hsl(var(--primary))"
+                />
+              </div>
+            }
+          >
+            {children}
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

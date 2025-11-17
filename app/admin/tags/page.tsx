@@ -1,5 +1,3 @@
-"use client";
-
 import { TagsManager } from "@/components/admin/tags-manager";
 
 export default function TagsPage() {

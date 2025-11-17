@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
@@ -10,6 +11,7 @@ export async function DELETE(
     await prisma.tag.delete({
       where: { id },
     });
+    revalidateTag("tags");
     return NextResponse.json({ message: "Tag deleted successfully" });
   } catch (error) {
     console.error("Error deleting tag:", error);
@@ -35,6 +37,7 @@ export async function PUT(
         slug,
       },
     });
+    revalidateTag("tags");
     return NextResponse.json(tag);
   } catch (error) {
     console.error("Error updating tag:", error);
