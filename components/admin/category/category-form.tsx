@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Save } from "lucide-react";
+import { Save, X, Upload, Loader2, ImageIcon } from "lucide-react";
 import Image from "next/image";
 
 type CategoryData = {
@@ -30,11 +30,11 @@ export function CategoryForm({ category, onSave }: Props) {
     description: category?.description || "",
     catimage: category?.catimage || null,
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
+  const [imageUrl, setImageUrl] = useState<string | null>(
     category?.catimage || null
   );
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (category) {
@@ -45,7 +45,7 @@ export function CategoryForm({ category, onSave }: Props) {
         description: category.description || "",
         catimage: category.catimage || null,
       });
-      setPreviewUrl(category.catimage || null);
+      setImageUrl(category.catimage || null);
     }
   }, [category]);
 
@@ -53,12 +53,57 @@ export function CategoryForm({ category, onSave }: Props) {
     setCategoryData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
     }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image must be less than 10MB');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('UPLOADCARE_PUB_KEY', process.env.NEXT_PUBLIC_UPLOADCARE_PUBLIC_KEY || '');
+      formData.append('UPLOADCARE_STORE', 'auto');
+
+      const response = await fetch('https://upload.uploadcare.com/base/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      const cdnUrl = `https://ucarecdn.com/${data.file}/`;
+      
+      setImageUrl(cdnUrl);
+      toast.success('Image uploaded successfully!');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload image. Please try again.');
+    } finally {
+      setUploading(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageUrl(null);
+    toast.success("Image removed");
   };
 
   const handleSave = async () => {
@@ -69,13 +114,12 @@ export function CategoryForm({ category, onSave }: Props) {
 
     setSaving(true);
 
-    const formData = new FormData();
-    formData.append("name", categoryData.name);
-    formData.append("slug", categoryData.slug);
-    formData.append("description", categoryData.description || "");
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
+    const payload = {
+      name: categoryData.name,
+      slug: categoryData.slug,
+      description: categoryData.description || "",
+      catimage: imageUrl || null,
+    };
 
     try {
       const url = categoryData.id
@@ -85,12 +129,15 @@ export function CategoryForm({ category, onSave }: Props) {
 
       const res = await fetch(url, {
         method,
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
 
       const savedCategory = await res.json();
       if (!res.ok) {
-        toast.error(savedCategory.message || "Failed to save category.");
+        toast.error(savedCategory.error || "Failed to save category.");
         return;
       }
 
@@ -109,59 +156,164 @@ export function CategoryForm({ category, onSave }: Props) {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6 px-4 py-6 dark:bg-gray-900 dark:text-gray-100">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">
-          {category ? "Edit Category" : "Add Category"}
-        </h3>
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="h-4 w-4 mr-1" />
-          {saving ? "Saving..." : "Save"}
-        </Button>
-      </div>
+    <div className="w-full max-w-3xl mx-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {category?.id ? "Edit Category" : "Create New Category"}
+            </h3>
+            <Button onClick={handleSave} disabled={saving} size="sm">
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Category
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
 
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="name">Category Name</Label>
-          <Input
-            id="name"
-            value={categoryData.name}
-            onChange={(e) => updateField("name", e.target.value)}
-            placeholder="e.g. Handmade Bags"
-          />
-        </div>
-        <div>
-          <Label htmlFor="slug">Slug</Label>
-          <Input
-            id="slug"
-            value={categoryData.slug}
-            onChange={(e) => updateField("slug", e.target.value)}
-            placeholder="e.g. handmade-bags"
-          />
-        </div>
-        <div>
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={categoryData.description || ""}
-            onChange={(e) => updateField("description", e.target.value)}
-            placeholder="A short description of the category."
-          />
-        </div>
-        <div>
-          <Label htmlFor="image">Category Image</Label>
-          <Input id="image" type="file" onChange={handleImageChange} />
-          {previewUrl && (
-            <div className="mt-4">
-              <Image
-                src={previewUrl}
-                alt="Category preview"
-                width={200}
-                height={200}
-                className="object-cover rounded-md"
-              />
-            </div>
-          )}
+        {/* Form Content */}
+        <div className="p-6 space-y-6">
+          {/* Category Image Upload */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Category Image
+            </Label>
+            
+            {imageUrl ? (
+              <div className="space-y-3">
+                <div className="relative w-full aspect-video max-w-md rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                  <Image
+                    src={imageUrl}
+                    alt="Category preview"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRemoveImage}
+                  className="w-full max-w-md"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Remove Image
+                </Button>
+              </div>
+            ) : (
+              <div className="max-w-md">
+                <div className="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 bg-gray-50/50 dark:bg-gray-900/50">
+                  <div className="space-y-3">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <ImageIcon className="h-8 w-8 text-gray-400" />
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Upload category image
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        PNG, JPG, or GIF (max 10MB)
+                      </p>
+                    </div>
+                    
+                    <label htmlFor="image-upload">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={uploading}
+                        asChild
+                      >
+                        <span className="cursor-pointer">
+                          {uploading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-2" />
+                              Choose File
+                            </>
+                          )}
+                        </span>
+                      </Button>
+                    </label>
+                    
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Category Name */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Category Name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="name"
+              value={categoryData.name}
+              onChange={(e) => updateField("name", e.target.value)}
+              placeholder="e.g. Handmade Bags"
+              className="w-full"
+              required
+            />
+          </div>
+          
+          {/* Slug */}
+          <div className="space-y-2">
+            <Label htmlFor="slug" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Slug <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="slug"
+              value={categoryData.slug}
+              onChange={(e) => updateField("slug", e.target.value)}
+              placeholder="e.g. handmade-bags"
+              className="w-full font-mono text-sm"
+              required
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              URL-friendly version (lowercase, hyphens only)
+            </p>
+          </div>
+          
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Description
+            </Label>
+            <Textarea
+              id="description"
+              value={categoryData.description || ""}
+              onChange={(e) => updateField("description", e.target.value)}
+              placeholder="A brief description of this category..."
+              rows={4}
+              className="w-full resize-none"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {categoryData.description?.length || 0}/500 characters
+            </p>
+          </div>
         </div>
       </div>
     </div>

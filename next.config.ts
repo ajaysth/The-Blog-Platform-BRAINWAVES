@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/7.x/avataaars/**",
       },
+      {
+        protocol: 'https',
+        hostname: 'ucarecdn.com',
+        pathname: '/**',
+      },
     ],
   },
 };

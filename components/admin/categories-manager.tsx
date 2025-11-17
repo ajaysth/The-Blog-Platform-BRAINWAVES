@@ -31,11 +31,11 @@ const getNestedProperty = (obj: any, path: string) => {
   return path.split(".").reduce((acc, part) => acc && acc[part], obj);
 };
 
-const ITEMS_PER_PAGE_CLIENT_SIDE = 10; // Define how many items to show per page client-side
+const ITEMS_PER_PAGE_CLIENT_SIDE = 10;
 
 export default function CategoryPage() {
-  const [allCategories, setAllCategories] = useState<Row[]>([]); // Stores all categories fetched from server
-  const [filteredAndSortedCategories, setFilteredAndSortedCategories] = useState<Row[]>([]); // Categories currently displayed in the table
+  const [allCategories, setAllCategories] = useState<Row[]>([]);
+  const [filteredAndSortedCategories, setFilteredAndSortedCategories] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCategory, setEditingCategory] = useState<Row | null>(null);
   const [deleteCategory, setDeleteCategory] = useState<Row | null>(null);
@@ -43,7 +43,10 @@ export default function CategoryPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [sort, setSort] = useState<{ column: string; direction: "asc" | "desc" } | null>({ column: "createdAt", direction: "desc" });
+  const [sort, setSort] = useState<{ column: string; direction: "asc" | "desc" } | null>({ 
+    column: "createdAt", 
+    direction: "desc" 
+  });
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -51,12 +54,9 @@ export default function CategoryPage() {
   const fetchAllCategories = useCallback(async () => {
     setLoading(true);
     try {
-      // Request all categories from the API, or a very large number if "all" is too much
-      // The API should still return total count for proper pagination calculation
-      const response = await fetch(`/api/admin/categories?all=true`); // Assuming API can handle an 'all' parameter
+      const response = await fetch(`/api/admin/categories?all=true`);
       const data = await response.json();
       setAllCategories(data.data);
-      // totalPages will be calculated client-side based on filteredAndSortedCategories length
     } catch (error) {
       console.error("Failed to fetch all categories:", error);
       toast.error("Failed to fetch all categories");
@@ -94,7 +94,6 @@ export default function CategoryPage() {
         if (typeof aValue === 'number' && typeof bValue === 'number') {
           return sort.direction === 'asc' ? aValue - bValue : bValue - aValue;
         }
-        // Fallback for other types or if values are null/undefined
         return 0;
       });
     }
@@ -105,15 +104,17 @@ export default function CategoryPage() {
     setFilteredAndSortedCategories(processedCategories.slice(startIndex, endIndex));
     setTotalPages(Math.ceil(processedCategories.length / ITEMS_PER_PAGE_CLIENT_SIDE));
 
-  }, [allCategories, debouncedSearch, page, sort]); // Dependencies for client-side processing
+  }, [allCategories, debouncedSearch, page, sort]);
 
   const handleAddCategory = () => setEditingCategory({} as Row);
   const handleEditCategory = (category: Row) => setEditingCategory(category);
   const handleCancel = () => setEditingCategory(null);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setEditingCategory(null);
-    fetchAllCategories(); // Re-fetch all categories to update client-side store
+    // Re-fetch to ensure we have the latest data including new images
+    await fetchAllCategories();
+    toast.success("Table refreshed with latest data");
   };
 
   const confirmDeleteCategory = async () => {
@@ -125,7 +126,7 @@ export default function CategoryPage() {
       });
       if (res.ok) {
         toast.success("Category deleted successfully");
-        fetchAllCategories(); // Re-fetch all categories to update client-side store
+        await fetchAllCategories();
       } else {
         const errorData = await res.json();
         toast.error(errorData.message || "Failed to delete category");
@@ -143,51 +144,82 @@ export default function CategoryPage() {
       header: "Image",
       accessor: "catimage",
       cell: (item: Row) => (
-        <div className="w-16 h-16 relative">
-          <Image
-            src={item.catimage || "/product_placeholder.jpeg"}
-            alt={item.name}
-            fill
-            className="object-cover rounded-md"
-          />
+        <div className="w-20 h-20 relative rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+          {item.catimage ? (
+            <Image
+              src={item.catimage}
+              alt={item.name}
+              fill
+              className="object-cover"
+              unoptimized={item.catimage.includes('ucarecdn.com')}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-xs text-gray-400">No image</span>
+            </div>
+          )}
         </div>
       ),
     },
     {
       header: "Name",
       accessor: "name",
+      cell: (item: Row) => (
+        <div className="font-medium text-gray-900 dark:text-white">
+          {item.name}
+        </div>
+      ),
     },
     {
       header: "Slug",
       accessor: "slug",
+      cell: (item: Row) => (
+        <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+          {item.slug}
+        </code>
+      ),
     },
     {
       header: "Description",
       accessor: "description",
+      cell: (item: Row) => (
+        <div className="max-w-xs truncate text-sm text-gray-600 dark:text-gray-400">
+          {item.description || "-"}
+        </div>
+      ),
     },
     {
       header: "Posts",
       accessor: "_count.posts",
-      cell: (item: Row) => <Badge variant="outline">{item._count.posts}</Badge>,
+      cell: (item: Row) => (
+        <Badge variant="secondary" className="font-semibold">
+          {item._count.posts}
+        </Badge>
+      ),
     },
     {
       header: "Created At",
       accessor: "createdAt",
-            cell: (item: Row) => formatDate(item.createdAt),
-          },
-        ];
+      cell: (item: Row) => (
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {formatDate(item.createdAt)}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <PageTransition>
       <div className="space-y-6">
         <PageHeader title="Categories" className="font-playfair-display" />
 
         {editingCategory && (
-          <div className="p-6 rounded-md shadow-md">
+          <div className="mb-6">
             <CategoryForm
               category={editingCategory.id ? editingCategory : undefined}
               onSave={handleSave}
             />
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex justify-end max-w-3xl mx-auto">
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
@@ -197,7 +229,7 @@ export default function CategoryPage() {
 
         <HeroTable
           columns={columns}
-          data={filteredAndSortedCategories} // Use client-side processed data
+          data={filteredAndSortedCategories}
           loading={loading}
           onEdit={handleEditCategory}
           onDelete={setDeleteCategory}
