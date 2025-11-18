@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, X, Upload, Loader2, ImageIcon } from "lucide-react";
 import Image from "next/image";
+import { uploadToUploadcare } from "@/lib/uploadcare";
 
 type CategoryData = {
   id?: string;
@@ -49,6 +50,19 @@ export function CategoryForm({ category, onSave }: Props) {
     }
   }, [category]);
 
+  // Auto-generate slug from name
+  useEffect(() => {
+    const generatedSlug = categoryData.name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "") // Remove non-alphanumeric characters except spaces and hyphens
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/^-+|-+$/g, ""); // Trim hyphens from start and end
+    
+    if (generatedSlug !== categoryData.slug) {
+      setCategoryData((prev) => ({ ...prev, slug: generatedSlug }));
+    }
+  }, [categoryData.name]);
+
   const updateField = (field: keyof CategoryData, value: string | null) => {
     setCategoryData((prev) => ({ ...prev, [field]: value }));
   };
@@ -57,43 +71,16 @@ export function CategoryForm({ category, onSave }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('Image must be less than 10MB');
-      return;
-    }
-
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('UPLOADCARE_PUB_KEY', process.env.NEXT_PUBLIC_UPLOADCARE_PUBLIC_KEY || '');
-      formData.append('UPLOADCARE_STORE', 'auto');
-
-      const response = await fetch('https://upload.uploadcare.com/base/', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
-      const cdnUrl = `https://ucarecdn.com/${data.file}/`;
-      
+      const cdnUrl = await uploadToUploadcare(file);
       setImageUrl(cdnUrl);
+      updateField("catimage", cdnUrl);
       toast.success('Image uploaded successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload image. Please try again.');
+      toast.error(error.message || 'Failed to upload image. Please try again.');
     } finally {
       setUploading(false);
       // Reset input
@@ -103,6 +90,7 @@ export function CategoryForm({ category, onSave }: Props) {
 
   const handleRemoveImage = () => {
     setImageUrl(null);
+    updateField("catimage", null);
     toast.success("Image removed");
   };
 
@@ -135,9 +123,10 @@ export function CategoryForm({ category, onSave }: Props) {
         body: JSON.stringify(payload),
       });
 
-      const savedCategory = await res.json();
+      const result = await res.json();
+      
       if (!res.ok) {
-        toast.error(savedCategory.error || "Failed to save category.");
+        toast.error(result.error || "Failed to save category.");
         return;
       }
 
@@ -146,7 +135,7 @@ export function CategoryForm({ category, onSave }: Props) {
           ? "✅ Category updated successfully!"
           : "✅ Category created successfully!"
       );
-      onSave(savedCategory.category);
+      onSave(result.category || result);
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong while saving.");
@@ -196,6 +185,7 @@ export function CategoryForm({ category, onSave }: Props) {
                     alt="Category preview"
                     fill
                     className="object-cover"
+                    unoptimized
                   />
                 </div>
                 <Button
@@ -287,13 +277,12 @@ export function CategoryForm({ category, onSave }: Props) {
             <Input
               id="slug"
               value={categoryData.slug}
-              onChange={(e) => updateField("slug", e.target.value)}
               placeholder="e.g. handmade-bags"
-              className="w-full font-mono text-sm"
-              required
+              className="w-full font-mono text-sm bg-gray-100 dark:bg-gray-700/50 cursor-not-allowed"
+              readOnly
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              URL-friendly version (lowercase, hyphens only)
+              URL-friendly version (auto-generated from name)
             </p>
           </div>
           
@@ -305,7 +294,7 @@ export function CategoryForm({ category, onSave }: Props) {
             <Textarea
               id="description"
               value={categoryData.description || ""}
-              onChange={(e) => updateField("description", e.target.value)}
+              onChange={(e) => updateField("description", e.targe.value)}
               placeholder="A brief description of this category..."
               rows={4}
               className="w-full resize-none"

@@ -7,6 +7,7 @@ import { TopLoader as NextTopLoader } from "next-top-loader";
 import { Suspense } from "react";
 import { Infinity } from "ldrs/react";
 import "ldrs/react/Infinity.css";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair-display",
@@ -35,31 +36,33 @@ export default function RootLayout({
       <body
         className={`${playfairDisplay.variable} ${inter.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <NextTopLoader color="var(--loader-color)" />
-          <Toaster position="bottom-right" />
-          <Suspense
-            fallback={
-              <div className="flex h-screen w-full items-center justify-center">
-                <Infinity
-                  size="55"
-                  stroke="4"
-                  strokeLength="0.15"
-                  bgOpacity="0.1"
-                  speed="1.3"
-                  color="hsl(var(--primary))"
-                />
-              </div>
-            }
+        <QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
           >
-            {children}
-          </Suspense>
-        </ThemeProvider>
+            <NextTopLoader color="var(--loader-color)" />
+            <Toaster position="bottom-right" />
+            <Suspense
+              fallback={
+                <div className="flex h-screen w-full items-center justify-center">
+                  <Infinity
+                    size="55"
+                    stroke="4"
+                    strokeLength="0.15"
+                    bgOpacity="0.1"
+                    speed="1.3"
+                    color="hsl(var(--primary))"
+                  />
+                </div>
+              }
+            >
+              {children}
+            </Suspense>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { deleteFromUploadcare } from "@/lib/uploadcare";
 
 export async function GET(
   req: NextRequest,
@@ -40,32 +41,22 @@ export async function PUT(
   try {
     const { id } = await context.params;
     const body = await req.json();
-    const { title, content, categoryId, published, featuredImage, slug } =
+    const { title, content, categoryId, status, coverImage, slug } =
       body;
 
-    const dataToUpdate: {
-      title: string;
-      content: string;
-      categoryId: string;
-      featuredImage?: string;
-      slug: string;
-      authorId: string;
-      status?: "PUBLISHED" | "DRAFT" | "ARCHIVED";
-      publishedAt?: Date | null;
-    } = {
+    const dataToUpdate: any = {
       title,
       content,
-      categoryId,
-      featuredImage,
       slug,
+      categoryId,
+      coverImage,
       authorId: session.user.id,
+      status,
     };
 
-    if (published === true) {
-      dataToUpdate.status = "PUBLISHED";
+    if (status === "PUBLISHED") {
       dataToUpdate.publishedAt = new Date();
-    } else if (published === false) {
-      dataToUpdate.status = "DRAFT";
+    } else {
       dataToUpdate.publishedAt = null;
     }
 
@@ -89,9 +80,26 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params;
+
+    // First, find the post to get the image URL
+    const post = await prisma.post.findUnique({
+      where: { id },
+    });
+
+    // If the post has a cover image, delete it from Uploadcare
+    if (post && post.coverImage) {
+      try {
+        await deleteFromUploadcare(post.coverImage);
+      } catch (uploadcareError) {
+        console.error("Failed to delete image from Uploadcare, but proceeding with post deletion:", uploadcareError);
+      }
+    }
+
+    // Then, delete the post from the database
     await prisma.post.delete({
       where: { id },
     });
+    
     return NextResponse.json({ message: "Post deleted successfully" });
   } catch (error) {
     console.error("Error deleting post:", error);

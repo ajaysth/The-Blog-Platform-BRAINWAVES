@@ -1,22 +1,21 @@
-import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import DashboardLayout from "@/components/dashboard/dashboard-layout";
 
-export const metadata = {
-  title: "Dashboard - BrainWaves",
-  description: "Your personal dashboard",
-};
-
-export default async function DashboardLayout({
+export default async function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const session = await auth();
 
-  // Redirect to sign-in if not authenticated
   if (!session?.user) {
     redirect("/auth/signin");
   }
 
-  return <div className="min-h-screen bg-background">{children}</div>;
+  return (
+    <DashboardLayout user={session.user} >
+      {children}
+    </DashboardLayout>
+  );
 }

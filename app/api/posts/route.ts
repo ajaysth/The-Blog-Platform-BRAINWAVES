@@ -11,25 +11,17 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, content, categoryId, published, featuredImage, slug } =
+    const { title, content, categoryId, status, coverImage, slug } =
       body;
 
-    const dataToCreate: {
-      title: string;
-      content: string;
-      categoryId: string;
-      featuredImage?: string;
-      slug: string;
-      authorId: string;
-      status?: "PUBLISHED" | "DRAFT" | "ARCHIVED";
-      publishedAt?: Date | null;
-    } = {
+    const dataToCreate: any = {
       title,
       content,
       categoryId,
-      featuredImage,
+      coverImage,
       slug,
       authorId: session.user.id,
+      status,
     };
 
     if (published === true) {

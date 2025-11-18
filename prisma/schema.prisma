@@ -65,8 +65,56 @@ model User {
   posts         Post[]
   sessions      Session[]
   wishlists     Wishlist[]
+  profile      Profile?
 
   @@map("users")
+}
+
+model Profile {
+  id              String        @id @default(cuid())
+  userId          String        @unique @map("user_id")
+  phoneNumber     String?       @map("phone_number")
+  dateOfBirth     DateTime?     @map("date_of_birth")
+  gender          Gender?
+  website         String?
+  location        String?
+  occupation      String?
+  company         String?
+  
+  // Address Information
+  addressLine1    String?       @map("address_line_1")
+  addressLine2    String?       @map("address_line_2")
+  city            String?
+  state           String?
+  postalCode      String?       @map("postal_code")
+  country         String?
+  
+  // Social Links
+  githubUrl       String?       @map("github_url")
+  linkedinUrl     String?       @map("linkedin_url")
+  twitterUrl      String?       @map("twitter_url")
+  instagramUrl    String?       @map("instagram_url")
+  facebookUrl     String?       @map("facebook_url")
+  youtubeUrl      String?       @map("youtube_url")
+  
+  // Privacy Settings
+  isPrivate       Boolean       @default(false) @map("is_private")
+  showEmail       Boolean       @default(false) @map("show_email")
+  showPhone       Boolean       @default(false) @map("show_phone")
+  
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
 }
 
 model Follow {

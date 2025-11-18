@@ -20,6 +20,16 @@ const TagForm = ({ onSubmit, initialData }: TagFormProps) => {
     }
   }, [initialData]);
 
+  // Auto-generate slug from name
+  useEffect(() => {
+    const generatedSlug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "") // Remove non-alphanumeric characters except spaces and hyphens
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/^-+|-+$/g, ""); // Trim hyphens from start and end
+    setSlug(generatedSlug);
+  }, [name]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
@@ -37,9 +47,10 @@ const TagForm = ({ onSubmit, initialData }: TagFormProps) => {
         required
       />
       <Input
-        placeholder="Tag Slug"
+        placeholder="Tag Slug (auto-generated)"
         value={slug}
-        onChange={(e) => setSlug(e.target.value)}
+        className="bg-gray-100 dark:bg-gray-700/50 cursor-not-allowed"
+        readOnly
         required
       />
       <Button type="submit">
