@@ -4,10 +4,14 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Heart, MessageCircle } from "lucide-react";
-import { blogPosts, categories } from "@/data/blogPosts";
+import { Post, User, Category } from "@prisma/client";
 
-type BlogPost = (typeof blogPosts)[0];
-type Category = (typeof categories)[0];
+type BlogPost = Post & {
+  author: User;
+  tags: string[];
+  likes: number;
+  comments: number;
+};
 
 interface BlogPostCardProps {
   post: BlogPost;
@@ -32,7 +36,7 @@ export function BlogPostCard({
         <Card className="group hover:shadow-2xl transition-all duration-500 border-2 hover:border-primary/50 overflow-hidden h-full bg-card backdrop-blur-sm hover:-translate-y-2">
           <div className="relative overflow-hidden aspect-video">
             <Image
-              src={post.image}
+              src={post.coverImage || "/hero-blog.jpg"}
               alt={post.title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -57,7 +61,9 @@ export function BlogPostCard({
                 {category ? category.name : ""}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                {new Date(post.date).toLocaleDateString("en-US", {
+                {new Date(
+                  post.publishedAt || post.createdAt
+                ).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
@@ -92,7 +98,7 @@ export function BlogPostCard({
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-1">
                   <Clock className="w-4 h-4" />
-                  <span>{post.readTime}</span>
+                  <span>{post.readTime} min read</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Heart className="w-4 h-4" />

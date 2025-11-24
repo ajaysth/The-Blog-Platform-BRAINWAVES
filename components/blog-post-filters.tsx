@@ -21,12 +21,17 @@ import {
   Heart,
   MessageCircle,
 } from "lucide-react";
-import { blogPosts } from "@/data/blogPosts";
+import { Post, User, Tag } from "@prisma/client";
 
 import SkeletonCard from "@/components/skeleton-card";
-// import SkeletonCard from './skeleton-card';
 
-type BlogPost = (typeof blogPosts)[0];
+type BlogPost = Post & {
+  author: User;
+  tags: string[];
+  likes: number;
+  comments: number;
+};
+
 type SortOption = "latest" | "popular" | "comments";
 
 interface BlogPostFiltersProps {
@@ -59,7 +64,7 @@ export function BlogPostFilters({
       filtered = filtered.filter(
         (post) =>
           post.title.toLowerCase().includes(query) ||
-          post.excerpt.toLowerCase().includes(query) ||
+          post.excerpt?.toLowerCase().includes(query) ||
           post.tags.some((tag) => tag.toLowerCase().includes(query))
       );
     }
@@ -81,7 +86,9 @@ export function BlogPostFilters({
       case "latest":
       default:
         sorted.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          (a, b) =>
+            new Date(b.publishedAt || b.createdAt).getTime() -
+            new Date(a.publishedAt || a.createdAt).getTime()
         );
         break;
     }

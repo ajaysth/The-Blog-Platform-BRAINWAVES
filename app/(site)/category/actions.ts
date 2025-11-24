@@ -4,6 +4,25 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 
+export async function getAllCategoriesWithPostCount() {
+  try {
+    const categories = await prisma.category.findMany({
+      include: {
+        _count: {
+          select: { posts: true },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+    return categories;
+  } catch (error) {
+    console.error("Error fetching all categories with post count:", error);
+    throw new Error("Failed to fetch all categories.");
+  }
+}
+
 export async function getCategoriesWithPostCount({
   page = 1,
   limit = 6,

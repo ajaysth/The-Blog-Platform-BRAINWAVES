@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -28,52 +28,49 @@ type CategoryWithCount = {
 
 interface CategoriesClientPageProps {
   initialCategories: CategoryWithCount[];
-  initialTotalPages: number;
 }
 
 const ITEMS_PER_PAGE = 6;
 
 export default function CategoriesClientPage({
   initialCategories,
-  initialTotalPages,
 }: CategoriesClientPageProps) {
-  const [categories, setCategories] = useState<CategoryWithCount[]>(initialCategories);
-  const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [searchTerm, setSearchTerm] = useState("");
   const [sort, setSort] = useState("name-asc");
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // We don't want to fetch categories on the initial render
-    // as we already have the initial categories.
-    if (currentPage === 1 && searchTerm === "" && sort === "name-asc") {
-      return;
-    }
+  const filteredAndSortedCategories = useMemo(() => {
+    let filtered = initialCategories.filter(
+      (category) =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        category.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-    const fetchCategories = async () => {
-      setLoading(true);
-      try {
-        const [sortKey, sortDirection] = sort.split("-");
-        const res = await fetch(
-          `/api/categories?page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${searchTerm}&sort=${sortKey}&direction=${sortDirection}`
-        );
-        if (!res.ok) {
-          throw new Error("Failed to fetch categories");
-        }
-        const data = await res.json();
-        setCategories(data.data);
-        setTotalPages(data.totalPages);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        // Optionally show a toast error to the user
-      } finally {
-        setLoading(false);
+    const [sortKey, sortDirection] = sort.split("-");
+
+    filtered.sort((a, b) => {
+      if (sortKey === "name") {
+        return sortDirection === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      } else if (sortKey === "posts") {
+        return sortDirection === "asc"
+          ? a._count.posts - b._count.posts
+          : b._count.posts - a._count.posts;
       }
-    };
+      return 0;
+    });
 
-    fetchCategories();
-  }, [currentPage, searchTerm, sort]);
+    return filtered;
+  }, [initialCategories, searchTerm, sort]);
+
+  const totalPages = Math.ceil(
+    filteredAndSortedCategories.length / ITEMS_PER_PAGE
+  );
+  const paginatedCategories = filteredAndSortedCategories.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
@@ -142,13 +139,9 @@ export default function CategoriesClientPage({
 
         {/* Categories Grid */}
         <section className="relative">
-          {loading ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            </div>
-          ) : categories.length > 0 ? (
+          {paginatedCategories.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {categories.map((category, index) => (
+              {paginatedCategories.map((category, index) => (
                 <motion.div
                   key={category.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -178,7 +171,7 @@ export default function CategoriesClientPage({
             <Button
               variant="outline"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1 || loading}
+              disabled={currentPage === 1}
             >
               Previous
             </Button>
@@ -188,7 +181,7 @@ export default function CategoriesClientPage({
             <Button
               variant="outline"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages || loading}
+              disabled={currentPage === totalPages}
             >
               Next
             </Button>
