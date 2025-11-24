@@ -45,6 +45,12 @@ export default function CategoriesClientPage({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // We don't want to fetch categories on the initial render
+    // as we already have the initial categories.
+    if (currentPage === 1 && searchTerm === "" && sort === "name-asc") {
+      return;
+    }
+
     const fetchCategories = async () => {
       setLoading(true);
       try {
