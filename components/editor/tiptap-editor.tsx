@@ -12,6 +12,8 @@ import { FontFamily } from "@tiptap/extension-font-family"; // Re-add FontFamily
 import Color from "@tiptap/extension-color";
 import { useEffect } from "react";
 import Toolbar from "./toolbar";
+import { uploadToUploadcare } from "@/lib/uploadcare";
+import toast from "react-hot-toast";
 
 interface TiptapEditorProps {
   content: string;
@@ -88,6 +90,51 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       attributes: {
         class:
           "prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none focus:outline-none min-h-[400px] px-4 py-3",
+      },
+      handleDrop(view, event, slice, moved) {
+        if (
+          !moved &&
+          event.dataTransfer &&
+          event.dataTransfer.files &&
+          event.dataTransfer.files[0]
+        ) {
+          const file = event.dataTransfer.files[0];
+          if (file.type.startsWith("image/")) {
+            const uploadPromise = uploadToUploadcare(file).then((src) => {
+              const { schema } = view.state;
+              const node = schema.nodes.image.create({ src });
+              const transaction = view.state.tr.replaceSelectionWith(node);
+              view.dispatch(transaction);
+            });
+            toast.promise(uploadPromise, {
+              loading: "Uploading image...",
+              success: "Image uploaded!",
+              error: "Failed to upload image.",
+            });
+            return true; // handled
+          }
+        }
+        return false; // not handled use default behaviour
+      },
+      handlePaste(view, event, slice) {
+        if (event.clipboardData && event.clipboardData.files && event.clipboardData.files[0]) {
+          const file = event.clipboardData.files[0];
+          if (file.type.startsWith("image/")) {
+            const uploadPromise = uploadToUploadcare(file).then((src) => {
+              const { schema } = view.state;
+              const node = schema.nodes.image.create({ src });
+              const transaction = view.state.tr.replaceSelectionWith(node);
+              view.dispatch(transaction);
+            });
+            toast.promise(uploadPromise, {
+              loading: "Uploading image...",
+              success: "Image uploaded!",
+              error: "Failed to upload image.",
+            });
+            return true; // handled
+          }
+        }
+        return false; // not handled use default behaviour
       },
     },
     onUpdate: ({ editor }) => {

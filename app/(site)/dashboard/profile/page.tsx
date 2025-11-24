@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth"; // Import the auth function directly
 import prisma from "@/lib/prisma";
 import ProfileEditForm from "@/components/dashboard/profile-edit-form";
 
 export default async function ProfilePage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth(); // Use the auth() function to get the session
 
   if (!session?.user) {
     redirect("/auth/signin");

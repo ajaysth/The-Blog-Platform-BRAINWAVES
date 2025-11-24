@@ -1,21 +1,16 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import DashboardLayout from "@/components/dashboard/dashboard-layout";
+import { Suspense } from "react";
+import DashboardAuthWrapper from "@/components/dashboard/dashboard-auth-wrapper";
 
-export default async function Layout({
+export default function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect("/auth/signin");
-  }
-
   return (
-    <DashboardLayout user={session.user} >
-      {children}
-    </DashboardLayout>
+    <Suspense fallback={null}>
+      <DashboardAuthWrapper>
+        {children}
+      </DashboardAuthWrapper>
+    </Suspense>
   );
 }

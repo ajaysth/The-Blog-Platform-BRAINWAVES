@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,8 +31,11 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import { uploadToUploadcare } from "@/lib/uploadcare";
 import TiptapEditor from "@/components/editor/tiptap-editor";
+import CreatableSelect from 'react-select/creatable';
+import { MultiValue } from 'react-select';
 
 interface PostData {
+  id?: string;
   title: string;
   slug: string;
   excerpt: string;
@@ -38,44 +43,110 @@ interface PostData {
   coverImage: string;
   categoryId: string;
   tags: string[];
+  newTags?: string[];
   status: "DRAFT" | "PUBLISHED";
 }
 
 interface CreatePostFormProps {
   categories: Array<{ id: string; name: string }>;
   availableTags: Array<{ id: string; name: string }>;
-  onSave: (data: PostData) => Promise<void>;
+  initialData?: Partial<PostData>;
 }
+
+type TagOption = {
+  value: string;
+  label: string;
+};
+
+const initialPostState = {
+  title: "",
+  slug: "",
+  excerpt: "",
+  content: "",
+  coverImage: "",
+  categoryId: "",
+  tags: [],
+  status: "DRAFT" as "DRAFT" | "PUBLISHED",
+};
 
 export default function CreatePostForm({
   categories,
   availableTags,
-  onSave,
+  initialData,
 }: CreatePostFormProps) {
-  const [post, setPost] = useState<PostData>({
-    title: "",
-    slug: "",
-    excerpt: "",
-    content: "",
-    coverImage: "",
-    categoryId: "",
-    tags: [],
-    status: "DRAFT",
+  const [post, setPost] = useState({
+    title: initialData?.title || "",
+    slug: initialData?.slug || "",
+    excerpt: initialData?.excerpt || "",
+    content: initialData?.content || "",
+    coverImage: initialData?.coverImage || "",
+    categoryId: initialData?.categoryId || "",
+    tags: initialData?.tags?.map(tagId => {
+      const tag = availableTags.find(t => t.id === tagId);
+      return { value: tagId, label: tag ? tag.name : '' };
+    }).filter(t => t.label) || [],
+    status: initialData?.status || "DRAFT",
   });
-
-  const [loadingState, setLoadingState] = useState<"idle" | "drafting" | "publishing">("idle");
+  const [localCoverImagePreview, setLocalCoverImagePreview] = useState<string>("");
   const [previewMode, setPreviewMode] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const isEditing = !!initialData;
+
+  const mutation = useMutation({
+    mutationFn: (newPost: PostData) => {
+      const url = isEditing ? `/api/posts/${initialData?.id}` : '/api/posts';
+      const method = isEditing ? 'PUT' : 'POST';
+      return fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newPost),
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`Failed to ${isEditing ? 'update' : 'create'} post`);
+        }
+        return res.json();
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['my-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      toast.success(`Post ${isEditing ? 'updated' : 'created'} successfully!`);
+      if (!isEditing) {
+        setPost(initialPostState);
+      }
+      router.push('/dashboard/posts');
+      router.refresh();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const handleSubmit = (status: "DRAFT" | "PUBLISHED") => {
-    if (loadingState !== 'idle') return;
-    setLoadingState(status === 'DRAFT' ? 'drafting' : 'publishing');
-    // Fire and forget the server action. The redirect will handle navigation.
-    // This prevents the client from catching the redirect as an error.
-    onSave({ ...post, status });
+    if (mutation.isPending) return;
+    
+    const existingTags = post.tags.filter(tag => availableTags.some(at => at.id === tag.value)).map(tag => tag.value);
+    const newTags = post.tags.filter(tag => !availableTags.some(at => at.id === tag.value)).map(tag => tag.label);
+
+    mutation.mutate({
+      id: initialData?.id,
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt,
+      content: post.content,
+      coverImage: post.coverImage,
+      categoryId: post.categoryId,
+      status,
+      tags: existingTags,
+      newTags: newTags
+    });
   };
 
-  const updateField = (field: keyof PostData, value: any) => {
+  const updateField = (field: keyof typeof post, value: any) => {
     setPost((prev) => ({ ...prev, [field]: value }));
 
     if (field === "title") {
@@ -87,18 +158,18 @@ export default function CreatePostForm({
     }
   };
 
-  const toggleTag = (tagId: string) => {
-    setPost((prev) => ({
-      ...prev,
-      tags: prev.tags.includes(tagId)
-        ? prev.tags.filter((id) => id !== tagId)
-        : [...prev.tags, tagId],
-    }));
+  const handleTagsChange = (selectedOptions: MultiValue<TagOption>) => {
+    setPost(prev => ({ ...prev, tags: selectedOptions as TagOption[] }));
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Set local preview
+    const previewUrl = URL.createObjectURL(file);
+    setLocalCoverImagePreview(previewUrl);
+
     setUploading(true);
     try {
       const cdnUrl = await uploadToUploadcare(file);
@@ -106,25 +177,47 @@ export default function CreatePostForm({
       toast.success('Image uploaded successfully!');
     } catch (error: any) {
       toast.error(error.message || 'Failed to upload image.');
+      setLocalCoverImagePreview(""); // Clear local preview on error
     } finally {
       setUploading(false);
-      e.target.value = '';
+      e.target.value = ''; // Clear file input
     }
   };
 
   const handleRemoveImage = () => {
     updateField("coverImage", "");
+    setLocalCoverImagePreview(""); // Clear local preview if image is removed
     toast.success("Image removed");
   };
+
+  // Effect to clean up the object URL when the component unmounts or localCoverImagePreview changes
+  useEffect(() => {
+    return () => {
+      if (localCoverImagePreview) {
+        URL.revokeObjectURL(localCoverImagePreview);
+      }
+    };
+  }, [localCoverImagePreview]);
+
+  const tagOptions = availableTags.map(tag => ({ value: tag.id, label: tag.name }));
+
+  const readTime = useMemo(() => {
+    if (!post.content) return 0;
+    // Create a temporary div to strip HTML tags
+    const div = document.createElement("div");
+    div.innerHTML = post.content;
+    const text = div.textContent || div.innerText || "";
+    return Math.ceil(text.trim().split(/\s+/).length / 200);
+  }, [post.content]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Create New Post</h1>
+        <h1 className="text-3xl font-bold mb-2">{isEditing ? "Edit Post" : "Create New Post"}</h1>
           <p className="text-muted-foreground">
-            Share your thoughts with the world
+            {isEditing ? "Make changes to your existing post." : "Share your thoughts with the world"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -139,27 +232,27 @@ export default function CreatePostForm({
           <Button
             variant="outline"
             onClick={() => handleSubmit("DRAFT")}
-            disabled={loadingState !== 'idle'}
+            disabled={mutation.isPending}
             className="gap-2"
           >
-            {loadingState === 'drafting' ? (
+            {mutation.isPending && mutation.variables?.status === 'DRAFT' ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
               <Save size={16} />
             )}
-            {loadingState === 'drafting' ? 'Saving...' : 'Save Draft'}
+            {mutation.isPending && mutation.variables?.status === 'DRAFT' ? 'Saving...' : 'Save Draft'}
           </Button>
           <Button
             onClick={() => handleSubmit("PUBLISHED")}
-            disabled={loadingState !== 'idle'}
+            disabled={mutation.isPending}
             className="gap-2"
           >
-            {loadingState === 'publishing' ? (
+            {mutation.isPending && mutation.variables?.status === 'PUBLISHED' ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
               <FileText size={16} />
             )}
-            {loadingState === 'publishing' ? 'Publishing...' : 'Publish'}
+            {mutation.isPending && mutation.variables?.status === 'PUBLISHED' ? 'Publishing...' : 'Publish'}
           </Button>
         </div>
       </div>
@@ -195,8 +288,8 @@ export default function CreatePostForm({
                     value={post.slug}
                     onChange={(e) => updateField("slug", e.target.value)}
                     placeholder="post-url-slug"
-                    className="h-8"
-                  />
+                    className="h-8 cursor-not-allowed"
+                    readOnly />
                 </div>
               </div>
 
@@ -209,7 +302,7 @@ export default function CreatePostForm({
                 {post.coverImage ? (
                   <div className="space-y-3">
                     <div className="relative w-full aspect-video max-w-md rounded-lg overflow-hidden border-2 border-border">
-                      <Image src={post.coverImage} alt="Cover preview" fill className="object-cover" unoptimized />
+                      <Image src={localCoverImagePreview || post.coverImage} alt="Cover preview" fill className="object-cover" unoptimized />
                     </div>
                     <Button type="button" variant="outline" size="sm" onClick={handleRemoveImage} className="w-full max-w-md gap-2">
                       <X size={16} /> Remove Image
@@ -265,7 +358,6 @@ export default function CreatePostForm({
             </div>
           ) : (
             /* Preview Mode */
-            /* Preview Mode - Replace the existing preview section with this */
             <div className="prose prose-lg max-w-none animate-in fade-in duration-300">
               {post.coverImage && (
                 <img
@@ -321,22 +413,14 @@ export default function CreatePostForm({
               <Tag size={16} />
               Tags
             </Label>
-            <div className="flex flex-wrap gap-2">
-              {availableTags.map((tag) => (
-                <button
-                  key={tag.id}
-                  onClick={() => toggleTag(tag.id)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-sm transition-all duration-200",
-                    post.tags.includes(tag.id)
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-accent"
-                  )}
-                >
-                  {tag.name}
-                </button>
-              ))}
-            </div>
+            <CreatableSelect
+              isMulti
+              onChange={handleTagsChange}
+              options={tagOptions}
+              value={post.tags}
+              className="react-select-container"
+              classNamePrefix="react-select"
+            />
           </Card>
 
           {/* Publishing Info */}
@@ -363,7 +447,7 @@ export default function CreatePostForm({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Read time:</span>
                 <span className="font-medium">
-                  {Math.ceil(post.content.split(" ").length / 200)} min
+                  {readTime} min
                 </span>
               </div>
             </div>

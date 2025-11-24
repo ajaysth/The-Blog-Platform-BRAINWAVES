@@ -1,205 +1,269 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import { formatDistanceToNow } from "date-fns"
+import { Bell, Heart, MessageCircle, UserPlus, Star, Check, MoreHorizontal, Trash2, Settings, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 import {
-  Bell,
-  Heart,
-  MessageCircle,
-  UserPlus,
-  Check,
-  Trash2,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+  useNotifications,
+  useMarkAsRead,
+  useMarkAllAsRead,
+  useDeleteNotification,
+  type NotificationType,
+} from "@/hooks/use-notifications"
 
-interface Notification {
-  id: string;
-  type: "like" | "comment" | "follow" | "system";
-  title: string;
-  message: string;
-  read: boolean;
-  createdAt: string;
-  actionUrl?: string;
-}
+export default function Notifications() {
+  const [activeTab, setActiveTab] = useState("all")
+  const [page, setPage] = useState(1)
 
-interface NotificationsProps {
-  notifications: Notification[];
-  onMarkAsRead: (id: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-  onMarkAllAsRead: () => Promise<void>;
-}
+  const { data, isLoading, error } = useNotifications(
+    page,
+    20,
+    activeTab === "unread",
+    activeTab === "all" || activeTab === "unread" ? "all" : activeTab
+  )
 
-export default function Notifications({
-  notifications: initialNotifications,
-  onMarkAsRead,
-  onDelete,
-  onMarkAllAsRead,
-}: NotificationsProps) {
-  const [notifications, setNotifications] = useState(initialNotifications);
-  const [filter, setFilter] = useState<"all" | "unread">("all");
+  const markAsReadMutation = useMarkAsRead()
+  const markAllAsReadMutation = useMarkAllAsRead()
+  const deleteNotificationMutation = useDeleteNotification()
 
-  const filteredNotifications = notifications.filter((n) =>
-    filter === "all" ? true : !n.read
-  );
+  const notifications = data?.notifications || []
+  const unreadCount = data?.unreadCount || 0
+  const pagination = data?.pagination
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const getIcon = (type: Notification["type"]) => {
+  const getIcon = (type: NotificationType) => {
     switch (type) {
       case "like":
-        return <Heart className="text-red-500" size={20} />;
+        return <Heart className="h-4 w-4 text-red-500 fill-red-500" />
       case "comment":
-        return <MessageCircle className="text-blue-500" size={20} />;
+      case "reply":
+        return <MessageCircle className="h-4 w-4 text-blue-500 fill-blue-500" />
       case "follow":
-        return <UserPlus className="text-primary" size={20} />;
-      default:
-        return <Bell className="text-muted-foreground" size={20} />;
+        return <UserPlus className="h-4 w-4 text-green-500" />
+      case "system":
+        return <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+      case "mention":
+        return <Bell className="h-4 w-4 text-purple-500 fill-purple-500" />
     }
-  };
+  }
 
-  const handleMarkAsRead = async (id: string) => {
-    await onMarkAsRead(id);
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
+  const getNotificationText = (notification: any) => {
+    const messages: Record<string, string> = {
+      like: "liked your post",
+      comment: "commented on your post",
+      reply: "replied to your comment",
+      follow: "started following you",
+      mention: "mentioned you",
+      system: "",
+    }
+    return messages[notification.type] || ""
+  }
 
-  const handleDelete = async (id: string) => {
-    await onDelete(id);
-    setNotifications(notifications.filter((n) => n.id !== id));
-  };
-
-  const handleMarkAllAsRead = async () => {
-    await onMarkAllAsRead();
-    setNotifications(notifications.map((n) => ({ ...n, read: true })));
-  };
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-8 text-center">
+          <p className="text-destructive">Failed to load notifications. Please try again.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex items-start justify-between">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Notifications</h1>
-          <p className="text-muted-foreground">
-            {unreadCount > 0
-              ? `You have ${unreadCount} unread notification${
-                  unreadCount > 1 ? "s" : ""
-                }`
-              : "You're all caught up!"}
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+          <p className="text-muted-foreground mt-1">Stay updated with what's happening on your posts.</p>
         </div>
-        {unreadCount > 0 && (
-          <Button
-            variant="outline"
-            onClick={handleMarkAllAsRead}
-            className="gap-2"
-          >
-            <Check size={16} />
-            Mark all as read
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => markAllAsReadMutation.mutate()}
+              disabled={markAllAsReadMutation.isPending}
+              className="gap-2 bg-transparent"
+            >
+              {markAllAsReadMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              Mark all as read
+            </Button>
+          )}
+          <Button variant="ghost" size="icon">
+            <Settings className="h-5 w-5 text-muted-foreground" />
           </Button>
-        )}
+        </div>
       </div>
 
-      {/* Filters */}
-      <Card className="p-4">
-        <div className="flex gap-2">
-          <Button
-            variant={filter === "all" ? "default" : "outline"}
-            onClick={() => setFilter("all")}
-            size="sm"
-          >
-            All
-          </Button>
-          <Button
-            variant={filter === "unread" ? "default" : "outline"}
-            onClick={() => setFilter("unread")}
-            size="sm"
-          >
-            Unread ({unreadCount})
-          </Button>
-        </div>
-      </Card>
+      <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="unread">
+            Unread
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 px-1.5 min-w-[1.25rem]">
+                {unreadCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="like">Likes</TabsTrigger>
+          <TabsTrigger value="comment">Comments</TabsTrigger>
+        </TabsList>
 
-      {/* Notifications List */}
-      {filteredNotifications.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Bell className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">No notifications</p>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filteredNotifications.map((notification, index) => (
-            <Card
-              key={notification.id}
-              className={cn(
-                "p-4 transition-all duration-300 cursor-pointer",
-                "hover:shadow-card",
-                "animate-in slide-in-from-bottom-4",
-                !notification.read && "border-l-4 border-l-primary bg-accent/5"
-              )}
-              style={{
-                animationDelay: `${index * 50}ms`,
-                animationFillMode: "backwards",
-              }}
-            >
-              <div className="flex items-start gap-4">
-                {/* Icon */}
-                <div className="p-2 rounded-full bg-muted flex-shrink-0">
-                  {getIcon(notification.type)}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-4 mb-1">
-                    <h4 className="font-semibold">{notification.title}</h4>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(notification.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {notification.message}
-                  </p>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    {notification.actionUrl && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="text-xs"
-                      >
-                        <a href={notification.actionUrl}>View</a>
-                      </Button>
-                    )}
-                    {!notification.read && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleMarkAsRead(notification.id)}
-                        className="text-xs gap-1"
-                      >
-                        <Check size={12} />
-                        Mark as read
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(notification.id)}
-                      className="text-xs text-destructive hover:text-destructive gap-1"
-                    >
-                      <Trash2 size={12} />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
+        <TabsContent value={activeTab} className="mt-6 space-y-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center bg-card border border-border rounded-xl">
+              <div className="bg-muted/50 p-6 rounded-full mb-4">
+                <Bell className="h-10 w-10 text-muted-foreground" />
               </div>
-            </Card>
-          ))}
-        </div>
-      )}
+              <h3 className="text-xl font-semibold">No notifications</h3>
+              <p className="text-muted-foreground mt-2">You're all caught up! Check back later for new updates.</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={cn(
+                      "group flex items-start gap-4 p-4 rounded-xl border transition-all duration-200",
+                      notification.isRead
+                        ? "bg-card border-border hover:border-primary/20"
+                        : "bg-primary/5 border-primary/20 hover:bg-primary/10"
+                    )}
+                  >
+                    <div className="relative flex-shrink-0">
+                      <div className="h-10 w-10 rounded-full overflow-hidden border border-border">
+                        {notification.actor?.image ? (
+                          <Image
+                            src={notification.actor.image}
+                            alt={notification.actor.name || "User"}
+                            width={40}
+                            height={40}
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-muted flex items-center justify-center">
+                            <span className="text-xs font-medium">
+                              {notification.actor?.name?.[0] || "?"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 shadow-sm border border-border">
+                        {getIcon(notification.type)}
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1">
+                          <p className="text-sm leading-relaxed">
+                            <span className="font-semibold">
+                              {notification.actor?.name || "Someone"}
+                            </span>{" "}
+                            <span className="text-muted-foreground">
+                              {getNotificationText(notification)}
+                            </span>{" "}
+                            {notification.post && (
+                              <Link
+                                href={`/post/${notification.post.slug}`}
+                                className="font-medium text-foreground hover:text-primary transition-colors"
+                              >
+                                {notification.post.title}
+                              </Link>
+                            )}
+                          </p>
+                          {notification.content && (
+                            <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded-lg border border-border/50 mt-2">
+                              "{notification.content}"
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground pt-1">
+                            {formatDistanceToNow(new Date(notification.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </p>
+                        </div>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {!notification.isRead && (
+                              <DropdownMenuItem
+                                onClick={() => markAsReadMutation.mutate(notification.id)}
+                                disabled={markAsReadMutation.isPending}
+                              >
+                                <Check className="mr-2 h-4 w-4" />
+                                Mark as read
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                              disabled={deleteNotificationMutation.isPending}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+
+                    {!notification.isRead && (
+                      <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-2" />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {pagination && pagination.totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {page} of {pagination.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={page === pagination.totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
-  );
+  )
 }

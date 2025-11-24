@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -16,11 +15,13 @@ import { Save, X, Upload, Loader2, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { uploadToUploadcare } from "@/lib/uploadcare";
+import TiptapEditor from "@/components/editor/tiptap-editor";
+import { JSONContent } from "@tiptap/react";
 
 // This is the DTO that the API expects
 export interface PostFormData {
   title: string;
-  content: string;
+  content: JSONContent;
   categoryId: string;
   authorId: string;
   status: "DRAFT" | "PUBLISHED";
@@ -36,20 +37,21 @@ interface PostFormProps {
 const PostForm = ({ onSubmit, initialData }: PostFormProps) => {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState<JSONContent>({ type: "doc", content: [] });
   const [categoryId, setCategoryId] = useState("");
   const [authorId, setAuthorId] = useState("");
   const [status, setStatus] = useState<"DRAFT" | "PUBLISHED">("DRAFT");
   const [categories, setCategories] = useState<Category[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [localCoverImagePreview, setLocalCoverImagePreview] = useState<string>("");
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title);
       setSlug(initialData.slug);
-      setContent(initialData.content || "");
+      setContent(initialData.content as JSONContent || { type: "doc", content: [] });
       setCategoryId(initialData.categoryId || "");
       setAuthorId(initialData.authorId);
       setStatus(initialData.status);
@@ -95,23 +97,40 @@ const PostForm = ({ onSubmit, initialData }: PostFormProps) => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Set local preview
+    const previewUrl = URL.createObjectURL(file);
+    setLocalCoverImagePreview(previewUrl);
+
     setUploading(true);
     try {
       const cdnUrl = await uploadToUploadcare(file);
       setCoverImage(cdnUrl);
       toast.success('Image uploaded successfully!');
+      setLocalCoverImagePreview(""); // Clear local preview once CDN URL is available
     } catch (error: any) {
       toast.error(error.message || 'Failed to upload image.');
+      setLocalCoverImagePreview(""); // Clear local preview on error
     } finally {
       setUploading(false);
-      e.target.value = '';
+      e.target.value = ''; // Clear file input
     }
   };
 
   const handleRemoveImage = () => {
     setCoverImage(null);
+    setLocalCoverImagePreview(""); // Clear local preview if image is removed
     toast.success("Image removed");
   };
+
+  // Effect to clean up the object URL when the component unmounts or localCoverImagePreview changes
+  useEffect(() => {
+    return () => {
+      if (localCoverImagePreview) {
+        URL.revokeObjectURL(localCoverImagePreview);
+      }
+    };
+  }, [localCoverImagePreview]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +152,7 @@ const PostForm = ({ onSubmit, initialData }: PostFormProps) => {
         {coverImage ? (
           <div className="space-y-3">
             <div className="relative w-full aspect-video max-w-md rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
-              <Image src={coverImage} alt="Cover image preview" fill className="object-cover" unoptimized />
+              <Image src={localCoverImagePreview || coverImage || ''} alt="Cover image preview" fill className="object-cover" unoptimized />
             </div>
             <Button type="button" variant="outline" size="sm" onClick={handleRemoveImage} className="w-full max-w-md">
               <X className="h-4 w-4 mr-2" /> Remove Image
@@ -176,7 +195,7 @@ const PostForm = ({ onSubmit, initialData }: PostFormProps) => {
 
       <div className="space-y-2">
         <Label htmlFor="content">Content</Label>
-        <Textarea id="content" placeholder="Post Content" value={content} onChange={(e) => setContent(e.target.value)} rows={10} />
+        <TiptapEditor content={content} onChange={setContent} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -34,6 +34,7 @@ export function CategoryForm({ category, onSave }: Props) {
   const [imageUrl, setImageUrl] = useState<string | null>(
     category?.catimage || null
   );
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null); // New state for local preview
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -63,6 +64,15 @@ export function CategoryForm({ category, onSave }: Props) {
     }
   }, [categoryData.name]);
 
+  // Cleanup for localPreviewUrl
+  useEffect(() => {
+    return () => {
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl);
+      }
+    };
+  }, [localPreviewUrl]);
+
   const updateField = (field: keyof CategoryData, value: string | null) => {
     setCategoryData((prev) => ({ ...prev, [field]: value }));
   };
@@ -71,16 +81,20 @@ export function CategoryForm({ category, onSave }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Set local preview immediately
+    const tempLocalUrl = URL.createObjectURL(file);
+    setLocalPreviewUrl(tempLocalUrl);
     setUploading(true);
 
     try {
       const cdnUrl = await uploadToUploadcare(file);
-      setImageUrl(cdnUrl);
-      updateField("catimage", cdnUrl);
+      setImageUrl(cdnUrl); // This sets the preview URL
+      updateField("catimage", cdnUrl); // This updates the form data
       toast.success('Image uploaded successfully!');
     } catch (error: any) {
       console.error('Upload error:', error);
       toast.error(error.message || 'Failed to upload image. Please try again.');
+      setLocalPreviewUrl(null); // Clear local preview on error
     } finally {
       setUploading(false);
       // Reset input
@@ -90,6 +104,7 @@ export function CategoryForm({ category, onSave }: Props) {
 
   const handleRemoveImage = () => {
     setImageUrl(null);
+    setLocalPreviewUrl(null); // Clear local preview if image is removed
     updateField("catimage", null);
     toast.success("Image removed");
   };
@@ -106,7 +121,7 @@ export function CategoryForm({ category, onSave }: Props) {
       name: categoryData.name,
       slug: categoryData.slug,
       description: categoryData.description || "",
-      catimage: imageUrl || null,
+      catimage: imageUrl || null, // Use imageUrl for saving
     };
 
     try {
@@ -177,11 +192,11 @@ export function CategoryForm({ category, onSave }: Props) {
               Category Image
             </Label>
             
-            {imageUrl ? (
+            {(localPreviewUrl || imageUrl) ? ( // Use localPreviewUrl for immediate display, fallback to imageUrl
               <div className="space-y-3">
                 <div className="relative w-full aspect-video max-w-md rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                   <Image
-                    src={imageUrl}
+                    src={localPreviewUrl || imageUrl || ''} // Fallback to empty string for Image component
                     alt="Category preview"
                     fill
                     className="object-cover"
@@ -294,7 +309,7 @@ export function CategoryForm({ category, onSave }: Props) {
             <Textarea
               id="description"
               value={categoryData.description || ""}
-              onChange={(e) => updateField("description", e.targe.value)}
+              onChange={(e) => updateField("description", e.target.value)}
               placeholder="A brief description of this category..."
               rows={4}
               className="w-full resize-none"

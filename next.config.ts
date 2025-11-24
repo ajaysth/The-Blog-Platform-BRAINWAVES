@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
         hostname: 'ucarecdn.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '2l9nx4euxr.ucarecd.net',
+        pathname: '/**',
+      },
     ],
   },
 };

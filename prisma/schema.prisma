@@ -67,6 +67,12 @@ model User {
   wishlists     Wishlist[]
   profile      Profile?
 
+  notifications      Notification[] @relation("UserNotifications")
+  triggeredNotifications Notification[] @relation("NotificationActor")
+  
+  // Add notification preferences
+  notificationSettings NotificationSettings?
+
   @@map("users")
 }
 
@@ -85,7 +91,7 @@ model Profile {
   addressLine1    String?       @map("address_line_1")
   addressLine2    String?       @map("address_line_2")
   city            String?
-  state           String?
+  state            String?
   postalCode      String?       @map("postal_code")
   country         String?
   
@@ -136,7 +142,7 @@ model Post {
   title       String
   slug        String      @unique
   excerpt     String?
-  content     String
+  content     String      @default("your text")
   coverImage  String?     @map("cover_image")
   status      PostStatus  @default(DRAFT)
   featured    Boolean     @default(false)
@@ -154,6 +160,7 @@ model Post {
   author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   category    Category?   @relation(fields: [categoryId], references: [id])
   wishlists   Wishlist[]
+  notifications Notification[]
 
   @@index([authorId])
   @@index([categoryId])
@@ -227,6 +234,7 @@ model Comment {
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Comment[] @relation("CommentReplies")
   post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  notifications Notification[]
 
   @@index([postId])
   @@index([authorId])
@@ -272,4 +280,67 @@ enum PostStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  content   String?
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+  
+  // Recipient
+  userId    String           @map("user_id")
+  user      User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Actor (who triggered the notification)
+  actorId   String?          @map("actor_id")
+  actor     User?            @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  
+  // Related entities
+  postId    String?          @map("post_id")
+  post      Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  commentId String?          @map("comment_id")
+  comment   Comment?         @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  metadata  Json?
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@index([actorId])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
+  FOLLOW
+  MENTION
+  SYSTEM
+}
+
+model NotificationSettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique @map("user_id")
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  emailOnComment        Boolean  @default(true) @map("email_on_comment")
+  emailOnLike           Boolean  @default(true) @map("email_on_like")
+  emailOnFollow         Boolean  @default(true) @map("email_on_follow")
+  emailOnMention        Boolean  @default(true) @map("email_on_mention")
+  
+  pushOnComment         Boolean  @default(true) @map("push_on_comment")
+  pushOnLike            Boolean  @default(true) @map("push_on_like")
+  pushOnFollow          Boolean  @default(true) @map("push_on_follow")
+  pushOnMention         Boolean  @default(true) @map("push_on_mention")
+  
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  
+
+  @@map("notification_settings")
 }

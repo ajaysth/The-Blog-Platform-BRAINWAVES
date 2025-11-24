@@ -19,6 +19,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { TableSkeleton } from "@/components/admin/table-skeleton";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { JSONContent } from "@tiptap/react";
 
 interface Post {
   id: string;
@@ -26,10 +27,13 @@ interface Post {
   slug: string;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   viewCount: number;
-  likes: number;
+  likes: number; // This is a count, not the actual li
+  // kes array
   createdAt: string;
   updatedAt: string;
   category?: { name: string };
+  readTime: number;
+  content: string | null;
 }
 
 interface MyPostsProps {
@@ -45,7 +49,8 @@ export default function MyPosts({ userId }: MyPostsProps) {
 
   const {
     data: postsData,
-    isLoading,
+    isLoading, // isLoading is true only on first load when no data is present
+    isFetching, // isFetching is true for any fetch, including background refetches
     isError,
     error,
   } = useQuery<Post[], Error>({
@@ -58,6 +63,7 @@ export default function MyPosts({ userId }: MyPostsProps) {
       const data = await response.json();
       return data.posts || [];
     },
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 
   const filteredPosts = (postsData || []).filter((post) => {
@@ -91,7 +97,8 @@ export default function MyPosts({ userId }: MyPostsProps) {
     }
   };
 
-  if (isLoading) {
+  // Show skeleton only if there's no postsData at all AND it's currently fetching
+  if (!postsData && isFetching) {
     return <TableSkeleton columns={6} />;
   }
 
@@ -160,12 +167,17 @@ export default function MyPosts({ userId }: MyPostsProps) {
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {isFetching && postsData && ( // Show subtle loader for background fetches
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
+                    <Loader2 className="animate-spin h-8 w-8 text-primary" />
+                </div>
+            )}
             {filteredPosts.map((post, index) => (
               <Card
                 key={post.id}
                 className={cn(
                   "p-6 hover:shadow-hover transition-all duration-300 relative", // Added relative positioning
-                  "animate-in slide-in-from-bottom-4"
+                  "animate-in slide-in-from-bottom-4",
                 )}
                 style={{
                   animationDelay: `${index * 100}ms`,

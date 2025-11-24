@@ -14,12 +14,21 @@ export async function GET(
       include: {
         category: true,
         author: true,
+        tags: {
+          select: {
+            tagId: true,
+          },
+        },
       },
     });
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
-    return NextResponse.json(post);
+    const postWithTagIds = {
+        ...post,
+        tags: post.tags.map(t => t.tagId),
+    };
+    return NextResponse.json(postWithTagIds);
   } catch (error) {
     console.error("Error fetching post:", error);
     return NextResponse.json(
@@ -41,17 +50,18 @@ export async function PUT(
   try {
     const { id } = await context.params;
     const body = await req.json();
-    const { title, content, categoryId, status, coverImage, slug } =
+    const { title, categoryId, status, coverImage, slug, content, excerpt } =
       body;
 
     const dataToUpdate: any = {
       title,
-      content,
       slug,
       categoryId,
       coverImage,
       authorId: session.user.id,
       status,
+      content,
+      excerpt,
     };
 
     if (status === "PUBLISHED") {
@@ -76,7 +86,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id:string }> }
 ) {
   try {
     const { id } = await context.params;

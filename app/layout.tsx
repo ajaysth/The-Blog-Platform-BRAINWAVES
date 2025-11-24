@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import { Infinity } from "ldrs/react";
 import "ldrs/react/Infinity.css";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { SessionProvider } from "next-auth/react";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair-display",
@@ -36,33 +37,35 @@ export default function RootLayout({
       <body
         className={`${playfairDisplay.variable} ${inter.variable} antialiased`}
       >
-        <QueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <NextTopLoader color="var(--loader-color)" />
-            <Toaster position="bottom-right" />
-            <Suspense
-              fallback={
-                <div className="flex h-screen w-full items-center justify-center">
-                  <Infinity
-                    size="55"
-                    stroke="4"
-                    strokeLength="0.15"
-                    bgOpacity="0.1"
-                    speed="1.3"
-                    color="hsl(var(--primary))"
-                  />
-                </div>
-              }
+        <SessionProvider>
+          <QueryProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
             >
-              {children}
-            </Suspense>
-          </ThemeProvider>
-        </QueryProvider>
+              <Toaster position="bottom-right" />
+              <Suspense
+                fallback={
+                  <div className="flex h-screen w-full items-center justify-center">
+                    <Infinity
+                      size="55"
+                      stroke="4"
+                      strokeLength="0.15"
+                      bgOpacity="0.1"
+                      speed="1.3"
+                      color="hsl(var(--primary))"
+                    />
+                  </div>
+                }
+              >
+                <NextTopLoader color="var(--loader-color)" />
+                {children}
+              </Suspense>
+            </ThemeProvider>
+          </QueryProvider>
+        </SessionProvider>
       </body>
     </html>
   );
