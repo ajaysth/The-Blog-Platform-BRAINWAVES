@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SocialShareButtons } from "@/components/social-share-buttons";
 
 import { PostWithAuthorAndCategory } from "@/types/post";
 import { User } from "@/types/user";
@@ -186,13 +187,7 @@ export default function PostClientPage({ post, comments: initialComments }: Post
                 </div>
 
                 <div className="ml-auto flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full"
-                  >
-                    <Share2 className="h-4 w-4" />
-                  </Button>
+                  <SocialShareButtons title={post.title} url={typeof window !== 'undefined' ? window.location.href : ''} />
                   <Button
                     variant="outline"
                     size="icon"
