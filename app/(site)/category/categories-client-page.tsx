@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, ArrowDownAZ, ArrowUpAZ, Hash, Book, Loader2 } from "lucide-react";
+import { Search, ArrowDownAZ, ArrowUpAZ, Hash, Book, Loader2, Sparkles } from "lucide-react";
 import CardFlip from "@/components/ui/category-card";
 
 type CategoryWithCount = {
@@ -30,14 +30,15 @@ interface CategoriesClientPageProps {
   initialCategories: CategoryWithCount[];
 }
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_LOAD = 6;
 
 export default function CategoriesClientPage({
   initialCategories,
 }: CategoriesClientPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sort, setSort] = useState("name-asc");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [categoriesToShow, setCategoriesToShow] = useState(ITEMS_PER_LOAD);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const filteredAndSortedCategories = useMemo(() => {
     let filtered = initialCategories.filter(
@@ -64,20 +65,24 @@ export default function CategoriesClientPage({
     return filtered;
   }, [initialCategories, searchTerm, sort]);
 
-  const totalPages = Math.ceil(
-    filteredAndSortedCategories.length / ITEMS_PER_PAGE
-  );
-  const paginatedCategories = filteredAndSortedCategories.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const displayedCategories = filteredAndSortedCategories.slice(0, categoriesToShow);
+  const hasMoreCategories = categoriesToShow < filteredAndSortedCategories.length;
+
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      // Simulate network delay
+      setCategoriesToShow((prev) => prev + ITEMS_PER_LOAD);
+      setLoadingMore(false);
+    }, 500);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+    <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20">
       <main className="pt-24 pb-16 container mx-auto px-4">
         {/* Header */}
         <section className="text-center mb-12">
-          <h1 className="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-7xl font-bold mb-4 bg-linear-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
             Explore Categories
           </h1>
           <p className="text-xl text-muted-foreground">
@@ -96,13 +101,16 @@ export default function CategoriesClientPage({
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to first page on new search
+                  setCategoriesToShow(ITEMS_PER_LOAD); // Reset displayed items on new search
                 }}
                 className="pl-10"
               />
             </div>
             <div className="flex gap-4 w-full md:w-auto">
-              <Select value={sort} onValueChange={setSort}>
+              <Select value={sort} onValueChange={(value) => {
+                setSort(value);
+                setCategoriesToShow(ITEMS_PER_LOAD); // Reset displayed items on new sort
+              }}>
                 <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
@@ -139,9 +147,9 @@ export default function CategoriesClientPage({
 
         {/* Categories Grid */}
         <section className="relative">
-          {paginatedCategories.length > 0 ? (
+          {displayedCategories.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {paginatedCategories.map((category, index) => (
+              {displayedCategories.map((category, index) => (
                 <motion.div
                   key={category.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -165,27 +173,27 @@ export default function CategoriesClientPage({
           )}
         </section>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <section className="flex justify-center items-center gap-4 mt-12">
+        {/* Load More Button */}
+        {hasMoreCategories && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex justify-center mt-12"
+          >
             <Button
-              variant="outline"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="px-8 py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              Previous
+              {loadingMore ? (
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              ) : (
+                <Sparkles className="h-5 w-5 mr-2" />
+              )}
+              {loadingMore ? "Loading..." : "Load More"}
             </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
-          </section>
+          </motion.div>
         )}
       </main>
     </div>

@@ -30,6 +30,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       return true;
     },
+    session: ({ session, user }) => {
+        session.user.id = user.id;
+        return session;
+      },
   },
   session: {
     strategy: "database",

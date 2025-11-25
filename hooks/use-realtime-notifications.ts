@@ -132,18 +132,25 @@ function showNotificationToast(notification: any) {
   const message = notificationMessages[notification.type] || ""
 
   toast(
-    <div className="flex items-center gap-3">
-      <div className="flex-1">
-        <p className="text-sm font-medium">
-          {notification.actor?.name || "Someone"} {message}
-        </p>
-        {notification.content && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {notification.content.substring(0, 50)}...
-          </p>
-        )}
-      </div>
-    </div>,
+    React.createElement(
+      "div",
+      { className: "flex items-center gap-3" },
+      React.createElement(
+        "div",
+        { className: "flex-1" },
+        React.createElement(
+          "p",
+          { className: "text-sm font-medium" },
+          `${notification.actor?.name || "Someone"} ${message}`
+        ),
+        notification.content &&
+          React.createElement(
+            "p",
+            { className: "text-xs text-muted-foreground mt-1" },
+            `${notification.content.substring(0, 50)}...`
+          )
+      )
+    ),
     {
       duration: 4000,
     }

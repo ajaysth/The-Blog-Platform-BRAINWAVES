@@ -32,6 +32,8 @@ import {
   LayoutDashboard,
   Sparkles,
 } from "lucide-react";
+import { Bookmark } from "lucide-react";
+
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -43,6 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "./ui/notification-bell";
 
 
 interface NavbarClientProps {
@@ -243,73 +246,81 @@ export const NavbarClient: FC<NavbarClientProps> = ({ session }) => {
             <div className="hidden lg:flex items-center gap-2">
               {session ? (
                 // Logged In - Show User Menu
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      className="flex items-center gap-2 px-3 py-2 rounded-full bg-secondary/50 hover:bg-secondary transition-all border border-border/30"
-                    >
-                      <Avatar className="w-7 h-7">
-                        <AvatarImage
-                          src={session.user?.image || ""}
-                          alt={session.user?.name || ""}
-                        />
-                        <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                          {session.user?.name?.charAt(0).toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium max-w-[100px] truncate">
-                        {session.user?.name}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    </motion.button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium">
+                <>
+                  <NotificationBell />
+                  <Link href="/dashboard/bookmarks">
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bookmark className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        className="flex items-center gap-2 px-3 py-2 rounded-full bg-secondary/50 hover:bg-secondary transition-all border border-border/30"
+                      >
+                        <Avatar className="w-7 h-7">
+                          <AvatarImage
+                            src={session.user?.image || ""}
+                            alt={session.user?.name || ""}
+                          />
+                          <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                            {session.user?.name?.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium max-w-[100px] truncate">
                           {session.user?.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {session.user?.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard" className="cursor-pointer">
-                        <LayoutDashboard className="w-4 h-4 mr-2" />
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href="/dashboard/profile"
-                        className="cursor-pointer"
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      </motion.button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium">
+                            {session.user?.name}
+                          </p>
+                          <p className className="text-xs text-muted-foreground truncate">
+                            {session.user?.email}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard" className="cursor-pointer">
+                          <LayoutDashboard className="w-4 h-4 mr-2" />
+                          Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/dashboard/profile"
+                          className="cursor-pointer"
+                        >
+                          <User className="w-4 h-4 mr-2" />
+                          Profile
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/dashboard/settings"
+                          className="cursor-pointer"
+                        >
+                          <Settings className="w-4 h-4 mr-2" />
+                          Settings
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleSignOut}
+                        className="cursor-pointer text-red-600 focus:text-red-600"
                       >
-                        <User className="w-4 h-4 mr-2" />
-                        Profile
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href="/dashboard/settings"
-                        className="cursor-pointer"
-                      >
-                        <Settings className="w-4 h-4 mr-2" />
-                        Settings
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={handleSignOut}
-                      className="cursor-pointer text-red-600 focus:text-red-600"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               ) : (
                 // Not Logged In - Show Login/Signup Buttons
                 <>
