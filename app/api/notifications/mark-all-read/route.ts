@@ -1,24 +1,22 @@
-// app/api/notifications/mark-all-read/route.ts
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { NotificationService } from "@/lib/services/notification.service"
+import { auth } from "@/lib/auth";
+import { OptimizedNotificationService } from "@/lib/services/notification.service.optimized";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    await NotificationService.markAllAsRead(session.user.id)
-
-    return NextResponse.json({ success: true })
+    await OptimizedNotificationService.markAllAsRead(session.user.id);
+    return NextResponse.json({ message: "All notifications marked as read" }, { status: 200 });
   } catch (error) {
-    console.error("Error marking all notifications as read:", error)
+    console.error("Error marking all notifications as read:", error);
     return NextResponse.json(
-      { error: "Failed to mark all notifications as read" },
+      { message: "Failed to mark all notifications as read" },
       { status: 500 }
-    )
-  }}
+    );
+  }
+}

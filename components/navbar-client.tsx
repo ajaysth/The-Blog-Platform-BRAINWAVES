@@ -10,8 +10,8 @@ import flogowhite from "@/public/flogo-white.png";
 import ltWhite from "@/public/lt-white.png";
 import ltBlack from "@/public/lt-black.png";
 import { Session } from "next-auth";
-import { signOut } from "next-auth/react";
-import { useSession } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
+import { toast } from "react-hot-toast";
 
 import Image from "next/image";
 import {
@@ -63,6 +63,7 @@ export const NavbarClient: FC<NavbarClientProps> = ({ session }) => {
     setMounted(true);
   }, []);
 
+  
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
@@ -78,7 +79,16 @@ export const NavbarClient: FC<NavbarClientProps> = ({ session }) => {
   };
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/" });
+    const promise = signOut({ callbackUrl: "/" });
+    toast.promise(promise, {
+      loading: "Signing out...",
+      success: "Signed out successfully!",
+      error: "Failed to sign out.",
+    });
+  };
+
+  const handleSignIn = () => {
+    signIn("google");
   };
 
   const postsCategories = [
@@ -224,7 +234,7 @@ export const NavbarClient: FC<NavbarClientProps> = ({ session }) => {
             {/* Create Post Button - Only show when logged in */}
             {session && (
               <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
-                <Link href="/create">
+                <Link href="/dashboard/create">
                   <button className="px-4 py-1.5 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded-full transition-colors shadow-lg hover:shadow-primary/30">
                     Create Post
                   </button>
@@ -280,7 +290,7 @@ export const NavbarClient: FC<NavbarClientProps> = ({ session }) => {
                           <p className="text-sm font-medium">
                             {session.user?.name}
                           </p>
-                          <p className className="text-xs text-muted-foreground truncate">
+                          <p  className="text-xs text-muted-foreground truncate">
                             {session.user?.email}
                           </p>
                         </div>
@@ -324,25 +334,23 @@ export const NavbarClient: FC<NavbarClientProps> = ({ session }) => {
               ) : (
                 // Not Logged In - Show Login/Signup Buttons
                 <>
-                  <Link href="/api/auth/signin">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="hover:shadow-soft transition-all"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href="/auth/signin">
-                    <Button
-                      size="sm"
-                      className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/30 transition-all"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Get Started
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hover:shadow-soft transition-all"
+                    onClick={handleSignIn}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/30 transition-all"
+                    onClick={handleSignIn}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Get Started
+                  </Button>
                 </>
               )}
             </div>
@@ -412,22 +420,19 @@ export const NavbarClient: FC<NavbarClientProps> = ({ session }) => {
                 </>
               ) : (
                 <div className="border-t border-border/30 my-2 pt-2 space-y-2">
-                  <Link href="/auth/signin" className="block">
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                      size="lg"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href="/auth/signin" className="block">
-                    <Button className="w-full" size="lg">
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Get Started
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    size="lg"
+                    onClick={handleSignIn}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                  <Button className="w-full" size="lg" onClick={handleSignIn}>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Get Started
+                  </Button>
                 </div>
               )}
             </div>

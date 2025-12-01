@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
-import { Bell, Heart, MessageCircle, UserPlus, Star, Check, MoreHorizontal, Trash2, Settings, Loader2 } from "lucide-react"
+import { Bell, Heart, MessageCircle, UserPlus, Star, Check, MoreHorizontal, Trash2, Settings, Loader2, CornerUpLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -22,15 +22,17 @@ export default function Notifications() {
   const [activeTab, setActiveTab] = useState("all")
   const [page, setPage] = useState(1)
 
-  const { data, isLoading, error } = useNotifications(
+  const notificationsQuery = useNotifications(
     page,
     20,
     activeTab === "unread",
     activeTab === "all" || activeTab === "unread" ? "all" : activeTab
   )
 
+  const { data, isLoading, error } = notificationsQuery
+
   const markAsReadMutation = useMarkAsRead()
-  const markAllAsReadMutation = useMarkAllAsRead()
+  const markAllAsReadMutation = useMarkAllAsRead(notificationsQuery.queryKey)
   const deleteNotificationMutation = useDeleteNotification()
 
   const notifications = data?.notifications || []
@@ -38,14 +40,15 @@ export default function Notifications() {
   const pagination = data?.pagination
 
   const getIcon = (type: NotificationType) => {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case "like":
         return <Heart className="h-4 w-4 text-red-500 fill-red-500" />
       case "comment":
-      case "reply":
         return <MessageCircle className="h-4 w-4 text-blue-500 fill-blue-500" />
+      case "reply":
+        return <CornerUpLeft className="h-4 w-4 text-blue-500" />
       case "follow":
-        return <UserPlus className="h-4 w-4 text-green-500" />
+        return <UserPlus className="h-4 w-4 text-green-500 fill-green-500" />
       case "system":
         return <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
       case "mention":
@@ -57,12 +60,24 @@ export default function Notifications() {
     const messages: Record<string, string> = {
       like: "liked your post",
       comment: "commented on your post",
-      reply: "replied to your comment",
+      reply: "replied to you on",
       follow: "started following you",
       mention: "mentioned you",
       system: "",
     }
-    return messages[notification.type] || ""
+    return messages[notification.type.toLowerCase()] || ""
+  }
+
+  const getNotificationLabel = (type: NotificationType) => {
+    const labels: Record<string, string> = {
+      like: "New Like",
+      comment: "New Comment",
+      reply: "New Reply",
+      follow: "New Follower",
+      mention: "New Mention",
+      system: "System Notification",
+    }
+    return labels[type.toLowerCase()] || ""
   }
 
   if (error) {
@@ -172,18 +187,19 @@ export default function Notifications() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1">
                           <p className="text-sm leading-relaxed">
-                            <span className="font-semibold">
-                              {notification.actor?.name || "Someone"}
+                            <span className="font-semibold text-primary">
+                              {getNotificationLabel(notification.type)}:
                             </span>{" "}
-                            <span className="text-muted-foreground">
+                            <span className="font-semibold text-foreground">
+                              {notification.actor?.name || "Someone"}{" "}
                               {getNotificationText(notification)}
                             </span>{" "}
                             {notification.post && (
                               <Link
                                 href={`/post/${notification.post.slug}`}
-                                className="font-medium text-foreground hover:text-primary transition-colors"
+                                className="font-medium text-primary hover:underline transition-colors"
                               >
-                                {notification.post.title}
+                                "{notification.post.title}"
                               </Link>
                             )}
                           </p>

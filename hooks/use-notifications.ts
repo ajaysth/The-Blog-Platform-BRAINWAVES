@@ -1,5 +1,5 @@
 // hooks/use-notifications.ts
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, QueryKey } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 
@@ -47,7 +47,7 @@ export function useNotifications(
   const { data: session } = useSession()
 
   return useQuery<NotificationsResponse>({
-    queryKey: ["notifications", page, limit, unreadOnly, type],
+    queryKey: ["notifications", { page, limit, unreadOnly, type }],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -70,7 +70,7 @@ export function useUnreadCount() {
   const { data: session } = useSession()
 
   return useQuery<{ count: number }>({
-    queryKey: ["notifications", "unread-count"],
+    queryKey: ["unread-count"],
     queryFn: async () => {
       const res = await fetch("/api/notifications/unread-count")
       if (!res.ok) throw new Error("Failed to fetch unread count")
@@ -96,6 +96,8 @@ export function useMarkAsRead() {
     onMutate: async (notificationId) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["notifications"] })
+      await queryClient.cancelQueries({ queryKey: ["unread-count"] })
+
 
       // Snapshot the previous value
       const previousNotifications = queryClient.getQueriesData({
@@ -130,11 +132,12 @@ export function useMarkAsRead() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["unread-count"] })
     },
   })
 }
 
-export function useMarkAllAsRead() {
+export function useMarkAllAsRead(queryKey: QueryKey) {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -146,14 +149,16 @@ export function useMarkAllAsRead() {
       return res.json()
     },
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["notifications"] })
+      await queryClient.cancelQueries({ queryKey })
+      await queryClient.cancelQueries({ queryKey: ["unread-count"] })
+
 
       const previousNotifications = queryClient.getQueriesData({
-        queryKey: ["notifications"],
+        queryKey,
       })
 
       queryClient.setQueriesData<NotificationsResponse>(
-        { queryKey: ["notifications"] },
+        { queryKey },
         (old) => {
           if (!old) return old
           return {
@@ -171,8 +176,8 @@ export function useMarkAllAsRead() {
     },
     onError: (err, variables, context) => {
       if (context?.previousNotifications) {
-        context.previousNotifications.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data)
+        context.previousNotifications.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data)
         })
       }
       toast.error("Failed to mark all as read")
@@ -181,7 +186,8 @@ export function useMarkAllAsRead() {
       toast.success("All notifications marked as read")
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey })
+      queryClient.invalidateQueries({ queryKey: ["unread-count"] })
     },
   })
 }
@@ -199,6 +205,8 @@ export function useDeleteNotification() {
     },
     onMutate: async (notificationId) => {
       await queryClient.cancelQueries({ queryKey: ["notifications"] })
+      await queryClient.cancelQueries({ queryKey: ["unread-count"] })
+
 
       const previousNotifications = queryClient.getQueriesData({
         queryKey: ["notifications"],
@@ -234,6 +242,7 @@ export function useDeleteNotification() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["unread-count"] })
     },
   })
 }

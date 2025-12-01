@@ -24,8 +24,6 @@ export class OptimizedNotificationService {
     limit: number
     unreadOnly?: boolean
   }) {
-    const cacheKey = `${params.userId}:${params.page}`
-    
     // Try cache first (only for read-all notifications)
     if (!params.unreadOnly) {
       try {
@@ -33,9 +31,9 @@ export class OptimizedNotificationService {
           params.userId,
           params.page
         )
-        if (cached) return JSON.parse(String(cached)) // Ensure explicit string conversion
+        if (cached) return cached
       } catch (error) {
-        console.error("Error parsing cached notifications, falling back to database:", error);
+        console.error("Error getting cached notifications, falling back to database:", error);
         // Fall through to fetch from database if cache parsing fails
       }
     }
@@ -126,6 +124,19 @@ export class OptimizedNotificationService {
       NotificationCache.invalidateUnreadCount(userId),
       NotificationCache.invalidateNotifications(userId),
     ])
+  }
+
+  static async markAllAsRead(userId: string) {
+    await prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
+
+    // Invalidate caches
+    await Promise.all([
+      NotificationCache.invalidateUnreadCount(userId),
+      NotificationCache.invalidateNotifications(userId),
+    ]);
   }
 
   static async create(data: any) {

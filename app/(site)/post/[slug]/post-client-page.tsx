@@ -80,7 +80,7 @@ export default function PostClientPage({ post, comments: initialComments }: Post
                 if (comment.id === replyingToCommentId) {
                   return {
                     ...comment,
-                    replies: [...comment.replies, newFullComment].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+                    replies: [...(comment.replies || []), newFullComment].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
                   };
                 }
                 if (comment.replies && comment.replies.length > 0) {
@@ -344,7 +344,7 @@ const CommentItem: FC<CommentItemProps> = ({ comment, onReplyClick }) => {
         </div>
         <p className="text-muted-foreground mb-3">{comment.content}</p>
         <Button variant="ghost" size="sm" onClick={() => onReplyClick(comment.id)} className="text-xs">Reply</Button>
-        {comment.replies.length > 0 && (
+        {(comment.replies?.length ?? 0) > 0 && (
           <div className="ml-8 mt-4 space-y-4">
             {comment.replies.map((reply) => (
               <CommentItem key={reply.id} comment={reply} onReplyClick={onReplyClick} />

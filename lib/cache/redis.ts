@@ -137,7 +137,7 @@ export class NotificationCache {
 
 
 
-  static async getNotifications(userId: string, page: number): Promise<string | null> { // Added page back
+  static async getNotifications(userId: string, page: number): Promise<any | null> { 
 
 
 
@@ -145,7 +145,7 @@ export class NotificationCache {
 
 
 
-    const key = this.NOTIFICATIONS_KEY(userId, page); // Use the page parameter
+    const key = this.NOTIFICATIONS_KEY(userId, page); 
 
 
 
@@ -153,7 +153,7 @@ export class NotificationCache {
 
 
 
-    return cached ? String(cached) : null;
+    return cached;
 
 
 

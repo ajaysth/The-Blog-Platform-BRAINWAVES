@@ -1,8 +1,7 @@
-// This becomes the server component wrapper
-import { getCachedSession } from "@/lib/session";
-import { NavbarClient } from "@/components/navbar-client";
 
-export default async function Navbar() {
-  const session = await getCachedSession();
+import { NavbarClient } from "@/components/navbar-client";
+import { Session } from "next-auth";
+
+export default function Navbar({ session }: { session: Session | null }) {
   return <NavbarClient session={session} />;
 }
