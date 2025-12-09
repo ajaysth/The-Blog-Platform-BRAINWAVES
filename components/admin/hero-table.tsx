@@ -85,48 +85,46 @@ const HeroTable = ({
   }
 
   return (
-    <div className="p-4 bg-background text-foreground rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">{title}</h2>
-        <div className="flex items-center space-x-2">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-64 pl-8"
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-2">
-                <ListFilter className="w-4 h-4 mr-2" />
-                Sort By: {sort ? `${sort.column} ${sort.direction}` : "None"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {columns.map((col) => (
-                <DropdownMenuItem
-                  key={col.accessor}
-                  onClick={() => handleSort(col.accessor)}
-                >
-                  {col.header}
-                  {sort && sort.column === col.accessor && (
-                    <span className="ml-2">
-                      {sort.direction === "asc" ? (
-                        <ArrowUp className="h-4 w-4" />
-                      ) : (
-                        <ArrowDown className="h-4 w-4" />
-                      )}
-                    </span>
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button onClick={createButtonAction}>{createButtonText}</Button>
+    <div className="p-4 bg-background text-foreground rounded-lg shadow-xl">
+      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <div className="flex justify-end items-center space-x-2 mb-4">
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-64 pl-8"
+          />
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-2">
+              <ListFilter className="w-4 h-4 mr-2" />
+              Sort By: {sort ? `${sort.column} ${sort.direction}` : "None"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {columns.map((col) => (
+              <DropdownMenuItem
+                key={col.accessor}
+                onClick={() => handleSort(col.accessor)}
+              >
+                {col.header}
+                {sort && sort.column === col.accessor && (
+                  <span className="ml-2">
+                    {sort.direction === "asc" ? (
+                      <ArrowUp className="h-4 w-4" />
+                    ) : (
+                      <ArrowDown className="h-4 w-4" />
+                    )}
+                  </span>
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button onClick={createButtonAction}>{createButtonText}</Button>
       </div>
       <Table>
         <TableHeader>
@@ -154,23 +152,28 @@ const HeroTable = ({
                     : getNestedProperty(item, col.accessor)}
                 </TableCell>
               ))}
-              <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(item)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="ml-2"
-                  onClick={() => onDelete(item)}
-                >
-                  Delete
-                </Button>
-              </TableCell>
+              <TableCell className="flex gap-2">
+  {/* Edit Button */}
+  <Button
+    variant="secondary"
+    size="sm"
+    className="bg-blue-500 hover:bg-blue-600 text-white border-none shadow-sm transition-colors"
+    onClick={() => onEdit(item)}
+  >
+    Edit
+  </Button>
+
+  {/* Delete Button */}
+  <Button
+    variant="destructive"
+    size="sm"
+    className="bg-red-500 hover:bg-red-600 text-white border-none shadow-sm transition-colors"
+    onClick={() => onDelete(item)}
+  >
+    Delete
+  </Button>
+</TableCell>
+
             </TableRow>
           ))}
         </TableBody>
