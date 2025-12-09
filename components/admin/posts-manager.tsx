@@ -216,7 +216,7 @@ const PostsManager = () => {
       <div className="p-4">
         <PageHeader title="Posts" className="font-playfair-display" />
         <div className="flex justify-end mb-4">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          {/* <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 onClick={() => {
@@ -238,7 +238,7 @@ const PostsManager = () => {
                 initialData={selectedPost}
               />
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
         </div>
         <HeroTable
           columns={columns}
@@ -246,7 +246,7 @@ const PostsManager = () => {
           loading={loading}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          title="Posts"
+          title=""
           createButtonText="Add New Post"
           createButtonAction={() => {
             setSelectedPost(null);

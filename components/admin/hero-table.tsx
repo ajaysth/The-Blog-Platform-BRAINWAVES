@@ -16,6 +16,7 @@ import {
   ArrowDown,
   ArrowUp,
   ListFilter,
+  Search, // Added Search icon
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -88,12 +89,15 @@ const HeroTable = ({
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">{title}</h2>
         <div className="flex items-center space-x-2">
-          <Input
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64"
-          />
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-64 pl-8"
+            />
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-2">
