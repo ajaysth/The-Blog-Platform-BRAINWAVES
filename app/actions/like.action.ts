@@ -1,14 +1,13 @@
 // actions/like.action.ts
 "use server"
 
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth" // Corrected import
+import prisma from "@/lib/prisma"
 import { NotificationHelpers } from "@/lib/services/notification.service"
 import { revalidatePath } from "next/cache"
 
 export async function toggleLike(postId: string) {
-  const session = await getServerSession(authOptions)
+  const session = await auth() // Use auth() to get the session
   
   if (!session?.user?.id) {
     throw new Error("Unauthorized")
@@ -51,5 +50,6 @@ export async function toggleLike(postId: string) {
   }
 
   revalidatePath(`/post/${postId}`)
+  revalidatePath('/dashboard/likes') // Added revalidation for dashboard/likes
   return { success: true }
 }

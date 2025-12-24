@@ -10,11 +10,11 @@ interface CategoryPageProps {
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const resolvedParams = await params; 
-  const category = await getCategoryWithPosts(resolvedParams.slug);
+  const categoryData = await getCategoryWithPosts(resolvedParams.slug);
 
-  if (!category) {
+  if (!categoryData) {
     notFound();
   }
 
-  return <CategoryClientPage category={category} />;
+  return <CategoryClientPage category={categoryData} userId={categoryData.userId} />;
 }

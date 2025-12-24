@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import DashboardOverview from "@/components/dashboard/dashboard-overview";
+import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
-export default async function DashboardPage() {
+async function DashboardData() {
   const session = await auth();
 
   if (!session?.user) {
@@ -59,5 +61,13 @@ export default async function DashboardPage() {
       recentPosts={recentPosts}
       userName={session.user.name || "User"}
     />
+  );
+}
+
+export default async function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardData />
+    </Suspense>
   );
 }

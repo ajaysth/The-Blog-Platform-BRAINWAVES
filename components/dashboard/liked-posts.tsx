@@ -1,114 +1,55 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useTransition } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Heart, MessageCircle, Search, Filter, Calendar, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { toast } from "react-hot-toast"
+import { toggleLike } from "@/app/actions/like.action"
 
-// Mock data for liked posts
-const MOCK_LIKED_POSTS = [
-  {
-    id: 1,
-    title: "The Future of Artificial Intelligence in Web Development",
-    excerpt: "Exploring how AI is reshaping the landscape of frontend development and what it means for developers.",
-    coverImage: "/ai-technology-abstract.png",
-    author: {
-      name: "Sarah Chen",
-      image: "/portrait-woman.jpg",
-    },
-    category: "Technology",
-    readTime: "5 min read",
-    publishedAt: "2 days ago",
-    likes: 124,
-    comments: 45,
-  },
-  {
-    id: 2,
-    title: "Mastering Tailwind CSS: Advanced Techniques",
-    excerpt: "Deep dive into custom animations, plugins, and creating a design system with Tailwind CSS.",
-    coverImage: "/coding-screen.jpg",
-    author: {
-      name: "Mike Johnson",
-      image: "/portrait-man.jpg",
-    },
-    category: "Design",
-    readTime: "8 min read",
-    publishedAt: "4 days ago",
-    likes: 89,
-    comments: 23,
-  },
-  {
-    id: 3,
-    title: "Sustainable Living: A Guide for Beginners",
-    excerpt: "Simple steps you can take today to reduce your carbon footprint and live a more eco-friendly life.",
-    coverImage: "/nature-green.jpg",
-    author: {
-      name: "Emma Wilson",
-      image: "/portrait-woman-2.jpg",
-    },
-    category: "Lifestyle",
-    readTime: "6 min read",
-    publishedAt: "1 week ago",
-    likes: 256,
-    comments: 78,
-  },
-  {
-    id: 4,
-    title: "The Psychology of Color in UI Design",
-    excerpt: "Understanding how color choices impact user behavior and conversion rates in modern applications.",
-    coverImage: "/abstract-colors.jpg",
-    author: {
-      name: "David Lee",
-      image: "/portrait-man-2.jpg",
-    },
-    category: "Design",
-    readTime: "7 min read",
-    publishedAt: "1 week ago",
-    likes: 167,
-    comments: 34,
-  },
-  {
-    id: 5,
-    title: "Remote Work: Finding the Perfect Balance",
-    excerpt: "Tips and strategies for maintaining productivity and mental health while working from home.",
-    coverImage: "/home-office.jpg",
-    author: {
-      name: "Jessica Taylor",
-      image: "/portrait-woman-3.jpg",
-    },
-    category: "Productivity",
-    readTime: "4 min read",
-    publishedAt: "2 weeks ago",
-    likes: 432,
-    comments: 91,
-  },
-  {
-    id: 6,
-    title: "Modern State Management in React",
-    excerpt: "Comparing Redux, Zustand, Jotai, and React Context for scalable application state.",
-    coverImage: "/react-code.jpg",
-    author: {
-      name: "Alex Brown",
-      image: "/portrait-man-3.jpg",
-    },
-    category: "Development",
-    readTime: "10 min read",
-    publishedAt: "2 weeks ago",
-    likes: 156,
-    comments: 28,
-  },
-]
+interface LikedPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  coverImage: string;
+  author: {
+    name: string;
+    image: string;
+  };
+  category: string;
+  readTime: string;
+  publishedAt: string;
+  likes: number;
+  comments: number;
+}
 
-export default function LikedPosts() {
+interface LikedPostsProps {
+  posts: LikedPost[];
+}
+
+export default function LikedPosts({ posts: initialPosts }: LikedPostsProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [posts, setPosts] = useState(MOCK_LIKED_POSTS)
+  const [posts, setPosts] = useState<LikedPost[]>(initialPosts)
+  const [isPending, startTransition] = useTransition()
 
-  const handleUnlike = (id: number) => {
-    // In a real app, this would call an API
-    setPosts(posts.filter((post) => post.id !== id))
+  useEffect(() => {
+    setPosts(initialPosts);
+  }, [initialPosts]);
+
+  const handleUnlike = async (postId: string) => {
+    startTransition(async () => {
+      try {
+        await toggleLike(postId);
+        setPosts(posts.filter((post) => post.id !== postId));
+        toast.success("Post unliked!");
+      } catch (error) {
+        toast.error("Something went wrong. Please try again.");
+      }
+    });
   }
 
   const filteredPosts = posts.filter(
@@ -181,6 +122,7 @@ export default function LikedPosts() {
                       e.preventDefault()
                       handleUnlike(post.id)
                     }}
+                    disabled={isPending}
                   >
                     <Heart className="h-4 w-4 fill-destructive text-destructive" />
                     <span className="sr-only">Unlike</span>
@@ -204,7 +146,7 @@ export default function LikedPosts() {
                   </div>
                 </div>
 
-                <Link href={`/post/${post.id}`} className="block group-hover:text-primary transition-colors">
+                <Link href={`/post/${post.slug}`} className="block group-hover:text-primary transition-colors">
                   <h3 className="text-lg font-semibold leading-tight mb-2 line-clamp-2">{post.title}</h3>
                 </Link>
 

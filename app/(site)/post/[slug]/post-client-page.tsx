@@ -13,10 +13,23 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SocialShareButtons } from "@/components/social-share-buttons";
+import { LikeButton } from "@/components/ui/like-button"; // New import
 
-import { PostWithAuthorAndCategory } from "@/types/post";
+import { Post } from "@prisma/client";
 import { User } from "@/types/user";
+import { Category } from "@/types/category"; // New import for Category
 import { CommentWithAuthorAndReplies } from "@/types/comment";
+
+// Update PostWithAuthorAndCategory type
+type PostWithAuthorAndCategory = Post & {
+  author: User;
+  category: Category | null;
+  tags: string[]; // Corrected to string[] to match the mapped data
+  likes: number;
+  comments: number;
+  isLiked: boolean; // New property
+  userId?: string; // New property
+};
 
 interface PostClientPageProps {
   post: PostWithAuthorAndCategory;
@@ -188,6 +201,7 @@ export default function PostClientPage({ post, comments: initialComments }: Post
 
                 <div className="ml-auto flex gap-2">
                   <SocialShareButtons title={post.title} url={typeof window !== 'undefined' ? window.location.href : ''} />
+                   <LikeButton postId={post.id} isLiked={post.isLiked} />
                   <Button
                     variant="outline"
                     size="icon"

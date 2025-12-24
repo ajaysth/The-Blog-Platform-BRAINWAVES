@@ -153,26 +153,26 @@ const HeroTable = ({
                 </TableCell>
               ))}
               <TableCell className="flex gap-2">
-  {/* Edit Button */}
-  <Button
-    variant="secondary"
-    size="sm"
-    className="bg-blue-500 hover:bg-blue-600 text-white border-none shadow-sm transition-colors"
-    onClick={() => onEdit(item)}
-  >
-    Edit
-  </Button>
+                {/* Edit Button */}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600 text-white border-none shadow-sm transition-colors"
+                  onClick={() => onEdit(item)}
+                >
+                  Edit
+                </Button>
 
-  {/* Delete Button */}
-  <Button
-    variant="destructive"
-    size="sm"
-    className="bg-red-500 hover:bg-red-600 text-white border-none shadow-sm transition-colors"
-    onClick={() => onDelete(item)}
-  >
-    Delete
-  </Button>
-</TableCell>
+                {/* Delete Button */}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="bg-red-500 hover:bg-red-600 text-white border-none shadow-sm transition-colors"
+                  onClick={() => onDelete(item)}
+                >
+                  Delete
+                </Button>
+              </TableCell>
 
             </TableRow>
           ))}

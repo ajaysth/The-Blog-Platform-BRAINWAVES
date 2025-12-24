@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LikeButton } from "@/components/ui/like-button"; // New import
 
 import { StaticImageData } from "next/image";
 
@@ -22,6 +23,8 @@ interface BlogCardProps {
   date: string;
   readTime: string;
   featured?: boolean;
+  isLiked: boolean; // New prop
+  userId?: string; // New optional prop
 }
 
 const BlogCard = ({
@@ -35,6 +38,8 @@ const BlogCard = ({
   date,
   readTime,
   featured = false,
+  isLiked, // Destructure new prop
+  userId, // Destructure new prop
 }: BlogCardProps) => {
   return (
     <Card
@@ -56,6 +61,12 @@ const BlogCard = ({
           <Badge className="absolute top-4 left-4 bg-accent text-accent-foreground rounded-full px-3 py-1">
             {category}
           </Badge>
+
+          {userId && ( // Conditionally render if userId exists
+            <div className="absolute top-4 right-4 z-10">
+              <LikeButton postId={id} isLiked={isLiked} />
+            </div>
+          )}
         </div>
 
         <div className="p-6 space-y-4">

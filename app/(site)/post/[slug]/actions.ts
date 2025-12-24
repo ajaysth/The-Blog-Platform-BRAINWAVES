@@ -1,9 +1,13 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth"; // New import
 
 export async function getPostBySlug(slug: string) {
   try {
+    const session = await auth(); // Fetch session
+    const userId = session?.user?.id;
+
     const post = await prisma.post.findUnique({
       where: { slug },
       include: {
@@ -20,6 +24,12 @@ export async function getPostBySlug(slug: string) {
             comments: true,
           },
         },
+        likes: userId // Only include likes if userId exists
+          ? {
+              where: { userId: userId },
+              select: { userId: true },
+            }
+          : undefined, // Don't fetch likes if no user
       },
     });
 
@@ -33,9 +43,10 @@ export async function getPostBySlug(slug: string) {
       likes: post._count.likes,
       comments: post._count.comments,
       tags: post.tags.map((postTag) => postTag.tag.name),
+      isLiked: userId ? post.likes.length > 0 : false, // Determine isLiked status
     };
 
-    return postWithCountsAndTags;
+    return { ...postWithCountsAndTags, userId: userId }; // Return userId also
   } catch (error) {
     console.error("Error fetching post by slug:", error);
     throw new Error("Failed to fetch post.");

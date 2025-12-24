@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Heart, MessageCircle } from "lucide-react";
 import { Post, User, Category } from "@prisma/client";
+import { LikeButton } from "@/components/ui/like-button"; // New import
 
 type BlogPost = Post & {
   author: User;
@@ -17,12 +18,16 @@ interface BlogPostCardProps {
   post: BlogPost;
   category: Category | undefined;
   selectedTags: string[];
+  isLiked: boolean; // New prop
+  userId?: string; // New optional prop
 }
 
 export function BlogPostCard({
   post,
   category,
   selectedTags,
+  isLiked,
+  userId,
 }: BlogPostCardProps) {
   return (
     <motion.div
@@ -100,8 +105,17 @@ export function BlogPostCard({
                   <Clock className="w-4 h-4" />
                   <span>{post.readTime} min read</span>
                 </div>
+                {/* Replaced with LikeButton and count */}
                 <div className="flex items-center space-x-1">
-                  <Heart className="w-4 h-4" />
+                  {userId ? (
+                    <LikeButton
+                      postId={post.id}
+                      isLiked={isLiked}
+                      className="p-0 bg-transparent hover:bg-transparent"
+                    />
+                  ) : (
+                    <Heart className="w-4 h-4" />
+                  )}
                   <span>{post.likes}</span>
                 </div>
                 <div className="flex items-center space-x-1">

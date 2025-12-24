@@ -14,19 +14,22 @@ type PostWithRelations = Post & {
   tags: string[];
   likes: number;
   comments: number;
+  isLiked: boolean; // Add isLiked to PostWithRelations type
 };
 
 type CategoryWithPosts = Category & {
   posts: PostWithRelations[];
+  userId?: string; // Add userId to CategoryWithPosts type
 };
 
 interface CategoryClientPageProps {
   category: CategoryWithPosts;
+  userId?: string; // New prop
 }
 
 const ITEMS_PER_LOAD = 6;
 
-const CategoryClientPage = ({ category }: CategoryClientPageProps) => {
+const CategoryClientPage = ({ category, userId }: CategoryClientPageProps) => {
   const [postsToShow, setPostsToShow] = useState(ITEMS_PER_LOAD);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -117,6 +120,8 @@ const CategoryClientPage = ({ category }: CategoryClientPageProps) => {
                             post={post}
                             category={category}
                             selectedTags={[]}
+                            isLiked={post.isLiked} // Pass isLiked
+                            userId={userId} // Pass userId
                           />
                         ))}
                       </motion.div>

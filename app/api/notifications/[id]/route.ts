@@ -1,21 +1,20 @@
 // app/api/notifications/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { auth } from "@/lib/auth" // Import auth directly
 import { NotificationService } from "@/lib/services/notification.service"
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth() // Use auth() to get the session
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    await NotificationService.markAsRead(params.id, session.user.id)
+    await NotificationService.markAsRead(context.params.id, session.user.id)
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -29,16 +28,16 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth() // Use auth() to get the session
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    await NotificationService.delete(params.id, session.user.id)
+    await NotificationService.delete(context.params.id, session.user.id)
 
     return NextResponse.json({ success: true })
   } catch (error) {

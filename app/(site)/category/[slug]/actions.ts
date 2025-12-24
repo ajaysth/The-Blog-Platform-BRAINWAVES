@@ -1,9 +1,13 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth"; // New import
 
 export async function getCategoryWithPosts(slug: string) {
   try {
+    const session = await auth(); // Fetch session
+    const userId = session?.user?.id;
+
     const category = await prisma.category.findUnique({
       where: { slug },
       include: {
@@ -21,6 +25,12 @@ export async function getCategoryWithPosts(slug: string) {
                 comments: true,
               },
             },
+            likes: userId // Only include likes if userId exists
+              ? {
+                  where: { userId: userId },
+                  select: { userId: true },
+                }
+              : undefined, // Don't fetch likes if no user, or if userId is null
           },
           orderBy: {
             createdAt: "desc",
@@ -36,8 +46,9 @@ export async function getCategoryWithPosts(slug: string) {
         likes: post._count.likes,
         comments: post._count.comments,
         tags: post.tags.map((postTag) => postTag.tag.name),
+        isLiked: userId ? post.likes.length > 0 : false, // Determine isLiked status
       }));
-      return { ...category, posts: postsWithCountsAndTags };
+      return { ...category, posts: postsWithCountsAndTags, userId: userId }; // Pass userId also
     }
 
     return null;
