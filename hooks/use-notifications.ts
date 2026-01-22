@@ -174,6 +174,11 @@ export function useMarkAllAsRead(queryKey: QueryKey) {
 
       return { previousNotifications }
     },
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: ["notifications"] });
+      queryClient.refetchQueries({ queryKey: ["unread-count"] });
+      toast.success("All notifications marked as read");
+    },
     onError: (err, variables, context) => {
       if (context?.previousNotifications) {
         context.previousNotifications.forEach(([key, data]) => {
@@ -181,13 +186,6 @@ export function useMarkAllAsRead(queryKey: QueryKey) {
         })
       }
       toast.error("Failed to mark all as read")
-    },
-    onSuccess: () => {
-      toast.success("All notifications marked as read")
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey })
-      queryClient.invalidateQueries({ queryKey: ["unread-count"] })
     },
   })
 }
